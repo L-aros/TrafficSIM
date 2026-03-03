@@ -90,17 +90,35 @@ jobs:
 
           test -n "$(ls -A dist)"
 
+      - name: Prepare release notes
+        run: |
+          version="${GITHUB_REF_NAME}"
+          notes_file="RELEASE_NOTES_${version}.md"
+          out="dist/release_notes.md"
+
+          if [ -f "$notes_file" ]; then
+            cp "$notes_file" "$out"
+          else
+            {
+              echo "# ${version}"
+              echo
+              echo "## Changelog"
+              echo
+              echo "- No RELEASE_NOTES_<tag>.md found; generated from recent commits."
+              echo
+              git log -20 --pretty=format:'- %s (%h)'
+              echo
+            } > "$out"
+          fi
+
+          test -s "$out"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
-          body: |
-            Release: ${{ github.ref_name }}
-
-            - Commit: ${{ github.sha }}
-            - Actor: ${{ github.actor }}
-            - Workflow: ${{ github.workflow }} / run ${{ github.run_number }}
+          body_path: dist/release_notes.md
           files: |
             dist/*.apk
