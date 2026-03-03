@@ -2,15 +2,15 @@
 
 on:
   push:
-    branches:
-      - "main"
+    tags:
+      - "v*"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-main
+  group: release
   cancel-in-progress: true
 
 jobs:
@@ -25,13 +25,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-
-      - name: Compute release metadata
-        id: meta
-        run: |
-          short="${GITHUB_SHA::7}"
-          echo "short=$short" >> "$GITHUB_OUTPUT"
-          echo "tag=auto-${GITHUB_RUN_NUMBER}-$short" >> "$GITHUB_OUTPUT"
 
       - name: Decode keystore
         run: |
@@ -57,6 +50,7 @@ jobs:
         run: |
           mkdir -p app/libs
           if [ ! -f app/libs/api-82.jar ]; then
+            curl -fL -o app/libs/api-82.jar https://repo1.maven.org/maven2/de/robv/android/xposed/api/82/api-82.jar || \
             curl -fL -o app/libs/api-82.jar https://artifactory.appodeal.com/appodeal-public/de/robv/android/xposed/api/82/api-82.jar || \
             curl -fL -o app/libs/api-82.jar https://furkank.net/maven/de/robv/android/xposed/api/82/api-82.jar
           fi
@@ -68,22 +62,45 @@ jobs:
       - name: Remove local Java home for CI
         run: |
           sed -i '/^org\.gradle\.java\.home=/d' gradle.properties
-          sed -i '/^org\.gradle\.java\.installations\.auto-download=/d' gradle.properties
 
       - name: Build release
         run: ./gradlew :app:assembleRelease
 
+      - name: Standardize APK names
+        run: |
+          version="${GITHUB_REF_NAME}"
+          mkdir -p dist
+
+          shopt -s nullglob
+          for apk in app/build/outputs/apk/release/*.apk; do
+            base="$(basename "$apk")"
+            abi=""
+
+            if [[ "$base" =~ ^app-(.+)-release\.apk$ ]]; then
+              abi="${BASH_REMATCH[1]}"
+            elif [[ "$base" == "app-release.apk" ]]; then
+              abi="universal"
+            else
+              abi="unknown"
+            fi
+
+            out="TrafficManager-${version}-${abi}-release.apk"
+            cp "$apk" "dist/$out"
+          done
+
+          test -n "$(ls -A dist)"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: 自动构建 ${{ steps.meta.outputs.tag }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           body: |
-            自动构建发布（每次提交 main 自动发布）。
+            Release: ${{ github.ref_name }}
 
-            - 提交：${{ github.sha }}
-            - 触发：${{ github.actor }}
-            - 工作流：${{ github.workflow }} / run ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Actor: ${{ github.actor }}
+            - Workflow: ${{ github.workflow }} / run ${{ github.run_number }}
           files: |
-            app/build/outputs/apk/release/*.apk
+            dist/*.apk
