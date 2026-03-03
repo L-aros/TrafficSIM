@@ -1,0 +1,7 @@
+﻿<resources>
+    <string name="btn_delete_selected_rules">删除已选规则</string>
+    <string name="label_rule_title_natural">[P%1$d] 连接到 %2$s 时切换为 SIM %3$d</string>
+    <string name="label_rule_detail_natural">MAC地址=%1$s</string>
+    <string name="status_no_rules_selected">状态：请先勾选要删除的规则</string>
+    <string name="status_rules_deleted">状态：已删除规则 -> %1$s</string>
+</resources>

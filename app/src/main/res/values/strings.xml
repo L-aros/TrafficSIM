@@ -1,0 +1,87 @@
+﻿<resources>
+    <string name="app_name">TrafficManager</string>
+    <string name="title_main">TrafficManager</string>
+    <string name="subtitle_main">按 Wi-Fi 规则自动切换数据卡</string>
+
+    <string name="btn_save">保存配置</string>
+    <string name="btn_start">启动自动切卡</string>
+    <string name="btn_stop">停止自动切卡</string>
+    <string name="btn_export_logs">导出日志</string>
+    <string name="btn_refresh_status">刷新实时状态</string>
+    <string name="btn_learn_sim1">学习 -> SIM1</string>
+    <string name="btn_learn_sim2">学习 -> SIM2</string>
+    <string name="btn_add_rule_sim1">新增规则 -> SIM1</string>
+    <string name="btn_add_rule_sim2">新增规则 -> SIM2</string>
+    <string name="btn_refresh_rules">刷新规则列表</string>
+    <string name="btn_to_sim1">改到 SIM1</string>
+    <string name="btn_to_sim2">改到 SIM2</string>
+    <string name="btn_delete">删除</string>
+
+    <string name="title_quick_learn">快速学习</string>
+    <string name="desc_quick_learn">读取当前连接的 Wi-Fi，一键生成规则</string>
+    <string name="title_rule_manager">规则管理</string>
+    <string name="desc_rule_manager">支持 WiFi名称/MAC地址，按优先级匹配并可直接改目标卡</string>
+    <string name="title_raw_json">高级配置（JSON）</string>
+    <string name="desc_raw_json">适合批量编辑和问题排查</string>
+    <string name="title_power_mode">运行模式</string>
+    <string name="desc_power_mode">省电模式：更省电但可能延迟或漏触发（未测试）\n常驻模式：更及时但可能更耗电（推荐）</string>
+    <string name="btn_mode_powersave">省电模式</string>
+    <string name="btn_mode_persistent">常驻模式</string>
+    <string name="hint_manual_ssid">手动输入 WiFi名称（可选）</string>
+    <string name="hint_manual_bssid">手动输入 MAC地址（可选）</string>
+    <string name="hint_manual_priority">优先级（可选，默认最大 + 10）</string>
+    <string name="hint_config_json">在这里编辑 JSON 配置</string>
+
+    <string name="status_ready">状态：就绪</string>
+    <string name="status_missing_permissions">状态：缺少权限 -> %1$s</string>
+    <string name="status_permissions_granted">状态：权限已授予</string>
+    <string name="status_config_saved">状态：配置已保存</string>
+    <string name="status_config_save_failed">状态：配置保存失败：%1$s</string>
+    <string name="status_service_started">状态：服务已启动</string>
+    <string name="status_service_stopped">状态：服务已停止</string>
+    <string name="status_auto_switch_enabled">状态：自动切卡已开启</string>
+    <string name="status_auto_switch_disabled">状态：自动切卡已关闭</string>
+    <string name="status_export_failed">导出失败：%1$s</string>
+    <string name="status_rule_list_unavailable">规则列表不可用：JSON 无效</string>
+    <string name="status_live">实时：数据卡=%1$s | %2$s</string>
+    <string name="status_live_wifi_connected">已连接WiFi=%1$s</string>
+    <string name="status_live_wifi_disconnected">未连接WiFi</string>
+    <string name="status_wifi_not_detected">状态：未检测到当前 Wi-Fi</string>
+    <string name="status_learned_rule">状态：已学习 %1$s -> SIM%2$d</string>
+    <string name="status_input_ssid_or_bssid">状态：请先输入 WiFi名称 或 MAC地址</string>
+    <string name="status_manual_rule_saved">状态：手动规则已保存 -> SIM%1$d</string>
+    <string name="status_rule_to_sim">状态：%1$s -> SIM%2$d</string>
+    <string name="status_rule_removed">状态：已删除规则 %1$s</string>
+    <string name="status_invalid_json_modify">状态：JSON 无效，无法修改规则</string>
+    <string name="status_mode_powersave">状态：已切换到省电模式</string>
+    <string name="status_mode_persistent">状态：已切换到常驻模式</string>
+    <string name="dialog_title_powersave">省电模式说明</string>
+    <string name="dialog_msg_powersave">优点：耗电更低、无常驻通知\n缺点：依赖系统广播，可能延迟或漏触发</string>
+    <string name="dialog_title_persistent">常驻模式说明</string>
+    <string name="dialog_msg_persistent">优点：触发更稳定、实时性更好\n缺点：需要前台常驻通知、耗电更高</string>
+    <string name="dialog_btn_confirm">我知道了</string>
+
+    <string name="label_unknown">未知</string>
+    <string name="label_null">无</string>
+    <string name="label_no_rules">暂无规则</string>
+    <string name="label_rule_title">[P%1$d] %2$s -> SIM%3$d</string>
+    <string name="label_rule_detail">WiFi名称=%1$s | MAC地址=%2$s</string>
+
+    <string name="chooser_export_logs">导出 TrafficManager 日志</string>
+    <string name="service_running">后台服务运行中</string>
+    <string name="notify_channel_service">TrafficManager 服务</string>
+    <string name="notify_channel_events">TrafficManager 事件</string>
+    <string name="notify_switch_success_title">数据卡已切换到 %1$s</string>
+    <string name="notify_switch_failed_title">数据卡切换失败（%1$s）</string>
+    <string name="notify_event_text">%1$s · 方式：%2$s</string>
+
+    <string name="nav_home">控制台</string>
+    <string name="nav_rules">规则</string>
+    <string name="nav_advanced">高级</string>
+    <string name="page_home_title">控制台</string>
+    <string name="page_home_subtitle">实时状态与快速操作</string>
+    <string name="page_rules_title">规则</string>
+    <string name="page_rules_subtitle">按 WiFi名称/MAC地址 管理切换策略</string>
+    <string name="page_advanced_title">高级</string>
+    <string name="page_advanced_subtitle">JSON 配置与日志导出</string>
+</resources>

@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+local.properties
+/.idea/
+/build/
+/app/build/
+app/libs/api-82.jar
+tm_ui*.xml
+wifi_dump.txt
+wifi_root_dump.txt
+Backup/
+keystore/
+*.keystore
+keystore.properties
+keystore_base64.txt

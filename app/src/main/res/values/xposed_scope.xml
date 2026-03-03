@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="xposed_recommended_scopes">
+        <item>com.android.phone</item>
+        <item>com.xiaomi.phone</item>
+        <item>com.qti.phone</item>
+        <item>com.qualcomm.qti.telephonyservice</item>
+        <item>com.android.services.telephony</item>
+        <item>com.android.telephony</item>
+    </string-array>
+</resources>

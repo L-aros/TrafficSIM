@@ -1,0 +1,9 @@
+﻿<resources>
+    <string name="title_delay_config">延迟切换配置</string>
+    <string name="desc_delay_config">设置切换冷却与离开 Wi-Fi 的延迟策略</string>
+    <string name="hint_cooldown_sec">冷却时间（秒）</string>
+    <string name="hint_leave_delay_sec">离开 Wi-Fi 延迟（秒）</string>
+    <string name="hint_leave_miss_threshold">离开 Wi-Fi 判定次数</string>
+    <string name="btn_apply_delay_config">应用延迟配置</string>
+    <string name="status_delay_config_saved">状态：延迟配置已保存</string>
+</resources>

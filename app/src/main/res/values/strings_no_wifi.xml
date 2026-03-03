@@ -1,0 +1,9 @@
+﻿<resources>
+    <string name="title_no_wifi_immediate">无 Wi-Fi 立即切换到指定 SIM 卡</string>
+    <string name="desc_no_wifi_immediate">开启后检测到无 Wi-Fi 网络将立即切到指定 SIM 卡</string>
+    <string name="title_no_wifi_target">无 Wi-Fi 目标卡槽</string>
+    <string name="desc_no_wifi_target">选择未连接 Wi-Fi 时切换到哪张卡，不选则不触发</string>
+    <string name="btn_no_wifi_off">关闭</string>
+    <string name="btn_no_wifi_sim1">SIM1</string>
+    <string name="btn_no_wifi_sim2">SIM2</string>
+</resources>
