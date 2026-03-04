@@ -42,41 +42,6 @@ TrafficManager 是一个 Android 应用 + LSPosed 模块，用于根据 Wi-Fi SS
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 
-## Release 构建（签名）
-
-Release 构建使用 `keystore/keystore.properties` 指定签名信息（请勿提交到 Git）。示例：
-
-```
-storeFile=keystore/release.keystore
-storePassword=***
-keyAlias=***
-keyPassword=***
-```
-
-## 自动发布 Release（GitHub Actions）
-
-推荐使用 `v*` 标签触发自动发布，避免每次提交都生成 Release，版本管理更清晰。
-
-1. 在 GitHub Actions Secrets 中设置：
-   - `KEYSTORE_BASE64`
-   - `KEYSTORE_PASSWORD`
-   - `KEY_ALIAS`
-   - `KEY_PASSWORD`
-2. 创建 tag 并推送：
-
-```powershell
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-### Release notes（更新日志）
-
-Release notes 不提交到仓库。请将更新日志保存在本地 `ReleaseN/`，并使用“注释 tag”作为发布说明来源：
-
-```powershell
-git tag -a v1.0.0 -F ReleaseN/RELEASE_NOTES_v1.0.0.md
-git push origin v1.0.0
-```
 
 ## 安装与启用
 
