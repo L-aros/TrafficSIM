@@ -1,9 +1,13 @@
 ﻿# TrafficManager
 
-TrafficManager 是一个 Android 应用 + LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动切换默认数据卡（SIM1/SIM2）。
+TrafficManager 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动切换默认数据卡（SIM1/SIM2）
 
 > 本项目由 Codex + GPT-5.3-Codex 全程协助开发
+>
 > 本项目不包含任何联网能力，可放心使用
+>
+> 如遇更新请优先前往[主仓库](https://github.com/L-aros/TrafficManage)进行更新
+
 
 
 ## 应用界面
