@@ -24,7 +24,7 @@
             android:contentDescription="@string/settings_item_self_check"
             android:padding="8dp"
             android:src="@drawable/ic_chevron_left"
-            android:tint="@color/on_background" />
+            app:tint="@color/on_background" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -195,6 +195,61 @@
                         android:text="@string/self_check_last_switch_pending"
                         android:textColor="@color/on_background"
                         android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFocusDebugPanel"
+                style="@style/Widget.Traffic.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/title_focus_debug"
+                        android:textColor="@color/on_background"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/desc_focus_debug"
+                        android:textColor="@color/muted"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/focusDebugSuccessButton"
+                        style="@style/Widget.Traffic.ButtonOutline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/btn_focus_debug_success" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/focusDebugFailedButton"
+                        style="@style/Widget.Traffic.ButtonOutline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/btn_focus_debug_failed" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/focusDebugVerifyFailedButton"
+                        style="@style/Widget.Traffic.ButtonOutline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/btn_focus_debug_verify_failed" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

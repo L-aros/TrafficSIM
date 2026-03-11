@@ -1,8 +1,8 @@
 ﻿<resources>
-    <string name="app_name">TrafficManager</string>
-    <string name="title_main">TrafficManager</string>
+    <string name="app_name">TrafficSIM</string>
+    <string name="title_main">TrafficSIM</string>
     <string name="subtitle_main">按 Wi-Fi 规则自动切换数据卡</string>
-    <string name="xposed_description">TrafficManager：按 Wi-Fi SSID/BSSID 规则自动切换数据卡</string>
+    <string name="xposed_description">TrafficSIM：按 Wi-Fi SSID/BSSID 规则自动切换数据卡</string>
 
     <string name="btn_save">保存配置</string>
     <string name="btn_start">启动自动切卡</string>
@@ -76,14 +76,23 @@
     <string name="label_rule_title">[P%1$d] %2$s -> SIM%3$d</string>
     <string name="label_rule_detail">WiFi名称=%1$s | MAC地址=%2$s</string>
 
-    <string name="chooser_export_logs">导出 TrafficManager 日志</string>
+    <string name="chooser_export_logs">导出 TrafficSIM 日志</string>
     <string name="service_running">后台服务运行中</string>
-    <string name="notify_channel_service">TrafficManager 服务</string>
-    <string name="notify_channel_events">TrafficManager 事件</string>
+    <string name="notify_channel_service">TrafficSIM 服务</string>
+    <string name="notify_channel_focus">TrafficSIM 焦点</string>
+    <string name="notify_channel_events">TrafficSIM 事件</string>
     <string name="notify_switch_success_title">数据卡已切换到 %1$s</string>
     <string name="notify_switch_failed_title">数据卡切换失败（%1$s）</string>
     <string name="notify_switch_verify_failed_title">数据卡切换未生效（%1$s）</string>
     <string name="notify_event_text">%1$s · 方式：%2$s</string>
+    <string name="notify_focus_title_success">已切换数据卡为 %1$s</string>
+    <string name="notify_focus_title_failed">切换数据卡到 %1$s 失败</string>
+    <string name="notify_focus_title_verify_failed">切换数据卡到 %1$s 未生效</string>
+    <string name="notify_focus_status_success">切卡成功</string>
+    <string name="notify_focus_status_failed">切卡失败</string>
+    <string name="notify_focus_status_verify_failed">切卡未生效</string>
+    <string name="notify_focus_reason_no_wifi">No Wi-Fi</string>
+    <string name="notify_focus_reason_leave_rule">离开规则</string>
 
     <string name="nav_home">控制台</string>
     <string name="nav_rules">规则</string>
@@ -102,6 +111,13 @@
 
     <string name="settings_item_self_check">自检</string>
     <string name="settings_item_self_check_desc">权限、定位、Wi-Fi 与运行模式</string>
+    <string name="title_focus_debug">焦点通知调试</string>
+    <string name="desc_focus_debug">仅发送焦点通知样例，用于验证大岛/小岛展示，不会执行切卡</string>
+    <string name="btn_focus_debug_success">成功样例</string>
+    <string name="btn_focus_debug_failed">失败样例</string>
+    <string name="btn_focus_debug_verify_failed">未生效样例</string>
+    <string name="status_focus_debug_sent">已发送焦点通知调试</string>
+    <string name="status_focus_debug_permission_missing">通知权限未授予，无法发送焦点通知</string>
     <string name="settings_item_advanced">高级配置</string>
     <string name="settings_item_advanced_desc">无 Wi-Fi、JSON、日志导出</string>
     <string name="settings_item_about">关于</string>
@@ -114,7 +130,7 @@
     <string name="about_version_placeholder">版本</string>
     <string name="about_summary">按 Wi‑Fi 规则自动切换数据卡，提供便捷的规则管理与运行状态查看。</string>
     <string name="about_github">GitHub 项目</string>
-    <string name="github_url">https://github.com/L-aros/TrafficManager</string>
+    <string name="github_url">https://github.com/L-aros/TrafficSIM</string>
 
     <string name="dialog_title_disclaimer">免责声明</string>
     <string name="dialog_msg_disclaimer">本软件仅供学习交流与技术研究使用，请勿用于任何非法用途。使用本软件产生的一切后果由使用者自行承担，开发者不承担任何责任。</string>

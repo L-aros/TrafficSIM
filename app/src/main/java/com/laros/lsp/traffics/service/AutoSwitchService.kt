@@ -17,7 +17,6 @@ import androidx.core.app.NotificationCompat
 import com.laros.lsp.traffics.R
 import com.laros.lsp.traffics.config.ConfigStore
 import com.laros.lsp.traffics.core.DataSlotResolver
-import com.laros.lsp.traffics.core.RootCommandTransport
 import com.laros.lsp.traffics.core.RuleMatcher
 import com.laros.lsp.traffics.core.SimSwitchCoordinator
 import com.laros.lsp.traffics.core.SwitchTransportChain
@@ -58,11 +57,11 @@ class AutoSwitchService : Service() {
         wifiSnapshotProvider = WifiSnapshotProvider(this)
         logStore = LogStore(this)
         eventNotifier = SwitchEventNotifier(this)
+        SwitchEventNotifier.cancelPendingTransitions(this)
 
         val chain = SwitchTransportChain(
             listOf(
-                XposedBroadcastTransport(),
-                RootCommandTransport()
+                XposedBroadcastTransport()
             )
         )
         coordinator = SimSwitchCoordinator(

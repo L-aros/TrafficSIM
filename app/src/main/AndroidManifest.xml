@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <permission
+        android:name="com.laros.lsp.traffics.permission.INTERNAL_BRIDGE"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.laros.lsp.traffics.permission.INTERNAL_BRIDGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -84,6 +89,20 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
                 <action android:name="android.net.wifi.STATE_CHANGE" />
                 <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".core.FocusSummaryReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".core.FocusDebugReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.laros.lsp.traffics.action.DEBUG_FOCUS_NOTIFICATION" />
             </intent-filter>
         </receiver>
 

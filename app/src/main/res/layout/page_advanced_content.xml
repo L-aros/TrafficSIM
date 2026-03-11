@@ -33,7 +33,7 @@
             android:layout_height="20dp"
             android:contentDescription="@null"
             android:src="@android:drawable/ic_menu_info_details"
-            android:tint="@color/primary" />
+            app:tint="@color/primary" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -63,7 +63,7 @@
             android:layout_height="16dp"
             android:contentDescription="@null"
             android:src="@drawable/ic_chevron_right"
-            android:tint="@color/muted" />
+            app:tint="@color/muted" />
     </LinearLayout>
 
     <TextView
@@ -98,7 +98,7 @@
             android:layout_height="20dp"
             android:contentDescription="@null"
             android:src="@android:drawable/ic_menu_manage"
-            android:tint="@color/primary" />
+            app:tint="@color/primary" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -128,7 +128,7 @@
             android:layout_height="16dp"
             android:contentDescription="@null"
             android:src="@drawable/ic_chevron_right"
-            android:tint="@color/muted" />
+            app:tint="@color/muted" />
     </LinearLayout>
 
     <TextView
@@ -167,7 +167,7 @@
                 android:layout_height="20dp"
                 android:contentDescription="@null"
                 android:src="@android:drawable/ic_menu_help"
-                android:tint="@color/primary" />
+                app:tint="@color/primary" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -197,7 +197,7 @@
                 android:layout_height="16dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_chevron_right"
-                android:tint="@color/muted" />
+                app:tint="@color/muted" />
         </LinearLayout>
 
         <View
@@ -223,7 +223,7 @@
                 android:layout_height="20dp"
                 android:contentDescription="@null"
                 android:src="@android:drawable/ic_dialog_alert"
-                android:tint="@color/primary" />
+                app:tint="@color/primary" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -253,7 +253,7 @@
                 android:layout_height="16dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_chevron_right"
-                android:tint="@color/muted" />
+                app:tint="@color/muted" />
         </LinearLayout>
     </LinearLayout>
 </merge>

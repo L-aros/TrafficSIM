@@ -40,8 +40,7 @@ class SwitchRunner(private val context: Context) {
             resolver = DataSlotResolver(context),
             transportChain = SwitchTransportChain(
                 listOf(
-                    XposedBroadcastTransport(),
-                    RootCommandTransport()
+                    XposedBroadcastTransport()
                 )
             ),
             logStore = logStore,

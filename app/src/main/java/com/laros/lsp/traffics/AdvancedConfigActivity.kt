@@ -76,6 +76,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
             syncNoWifiImmediateSwitch(cfg.noWifiImmediate)
             syncNoWifiSlot(cfg.noWifiSlot)
             syncPowerMode(cfg.powerSaveMode)
+            applyRuntimeConfig(cfg, "advanced_json_save")
             Toast.makeText(this, R.string.status_config_saved, Toast.LENGTH_SHORT).show()
         } else {
             val err = result.exceptionOrNull()?.message ?: getString(R.string.label_unknown)
@@ -226,6 +227,14 @@ class AdvancedConfigActivity : AppCompatActivity() {
 
     private fun startModeWorker(source: String) {
         val config = configStore.load()
+        applyRuntimeConfig(config, source)
+    }
+
+    private fun applyRuntimeConfig(config: AppConfig, source: String) {
+        if (!config.enabled) {
+            RunModeController.disable(this)
+            return
+        }
         RunModeController.apply(
             context = this,
             config = config,

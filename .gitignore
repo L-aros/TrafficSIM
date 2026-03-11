@@ -18,3 +18,11 @@ CLAUDE.md
 DEVELOPMENT.md
 ReleaseN/
 BaoGao.md
+
+# Local generated artifacts
+/output/
+/tmp/
+/androguard.db
+/androguard.db-shm
+/androguard.db-wal
+/androguard.log

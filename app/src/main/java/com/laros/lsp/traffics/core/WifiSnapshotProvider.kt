@@ -1,6 +1,7 @@
 package com.laros.lsp.traffics.core
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -88,7 +89,9 @@ class WifiSnapshotProvider(private val context: Context) {
         }.getOrNull()
     }
 
+    @SuppressLint("MissingPermission")
     private fun readFromScanResults(hint: Pair<String?, String?>?): Pair<String?, String?>? {
+        if (!canReadScanResults()) return null
         val bssidHint = hint?.second
         val ssidHint = hint?.first
         return runCatching {
@@ -139,6 +142,7 @@ class WifiSnapshotProvider(private val context: Context) {
         return WifiSnapshot(ssid = ssid, bssid = bssid)
     }
 
+    @SuppressLint("MissingPermission")
     private fun logFailureIfNeeded(
         fromCaps: Pair<String?, String?>?,
         fromManager: Pair<String?, String?>?,
@@ -148,7 +152,11 @@ class WifiSnapshotProvider(private val context: Context) {
         if (now - lastDiagAtMs < 30_000L) return
         lastDiagAtMs = now
 
-        val scanCount = runCatching { wifi?.scanResults?.size ?: 0 }.getOrDefault(0)
+        val scanCount = if (canReadScanResults()) {
+            runCatching { wifi?.scanResults?.size ?: 0 }.getOrDefault(0)
+        } else {
+            0
+        }
         val fine = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         val coarse = hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
         val nearby = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -175,6 +183,19 @@ class WifiSnapshotProvider(private val context: Context) {
 
     private fun hasPermission(permission: String): Boolean {
         return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun canReadScanResults(): Boolean {
+        val hasLocationPermission =
+            hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (!hasLocationPermission) return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !hasPermission(Manifest.permission.NEARBY_WIFI_DEVICES)
+        ) {
+            return false
+        }
+        return isLocationEnabled()
     }
 
     private fun isLocationEnabled(): Boolean {

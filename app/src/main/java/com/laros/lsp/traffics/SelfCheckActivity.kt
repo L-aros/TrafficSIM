@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -17,7 +19,10 @@ import androidx.lifecycle.lifecycleScope
 import com.laros.lsp.traffics.config.ConfigStore
 import com.laros.lsp.traffics.core.DataSlotResolver
 import com.laros.lsp.traffics.core.RootShell
+import com.laros.lsp.traffics.core.SwitchEvent
+import com.laros.lsp.traffics.core.SwitchEventNotifier
 import com.laros.lsp.traffics.core.WifiSnapshotProvider
+import com.laros.lsp.traffics.core.XiaomiFocusNotificationCompat
 import com.laros.lsp.traffics.databinding.ActivitySelfCheckBinding
 import com.laros.lsp.traffics.config.SwitchStateStore
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +51,15 @@ class SelfCheckActivity : AppCompatActivity() {
 
         binding.selfCheckBackButton.setOnClickListener { finish() }
         binding.selfCheckRefreshButton.setOnClickListener { refreshSelfCheck() }
+        binding.focusDebugSuccessButton.setOnClickListener {
+            triggerFocusNotificationDebug(XiaomiFocusNotificationCompat.FocusStatus.SUCCESS)
+        }
+        binding.focusDebugFailedButton.setOnClickListener {
+            triggerFocusNotificationDebug(XiaomiFocusNotificationCompat.FocusStatus.FAILED)
+        }
+        binding.focusDebugVerifyFailedButton.setOnClickListener {
+            triggerFocusNotificationDebug(XiaomiFocusNotificationCompat.FocusStatus.VERIFY_FAILED)
+        }
         refreshSelfCheck()
     }
 
@@ -247,6 +261,36 @@ class SelfCheckActivity : AppCompatActivity() {
 
     private fun isRootAvailable(): Boolean {
         return RootShell.hasRootAccess()
+    }
+
+    private fun triggerFocusNotificationDebug(status: XiaomiFocusNotificationCompat.FocusStatus) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(this, R.string.status_focus_debug_permission_missing, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val currentSlot = slotResolver.currentDataSlot()
+        val targetSlot = when (currentSlot) {
+            0 -> 1
+            1 -> 0
+            else -> 1
+        }
+        val sampleId = SystemClock.elapsedRealtime()
+        val event = SwitchEvent(
+            success = status == XiaomiFocusNotificationCompat.FocusStatus.SUCCESS,
+            targetSlot = targetSlot,
+            reason = "debug_ui_$sampleId",
+            transport = "self_check_$sampleId",
+            message = when (status) {
+                XiaomiFocusNotificationCompat.FocusStatus.SUCCESS -> "debug_success"
+                XiaomiFocusNotificationCompat.FocusStatus.FAILED -> "debug_failed"
+                XiaomiFocusNotificationCompat.FocusStatus.VERIFY_FAILED -> "verify_failed"
+            }
+        )
+        SwitchEventNotifier(this).notify(event)
+        Toast.makeText(this, R.string.status_focus_debug_sent, Toast.LENGTH_SHORT).show()
     }
 
     private fun isLocationEnabled(): Boolean {

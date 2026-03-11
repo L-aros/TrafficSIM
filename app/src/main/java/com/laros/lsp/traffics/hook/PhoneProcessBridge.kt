@@ -1,5 +1,6 @@
 package com.laros.lsp.traffics.hook
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,12 +8,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.telephony.SubscriptionManager
+import androidx.core.content.ContextCompat
 import com.laros.lsp.traffics.core.BridgeContract
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 object PhoneProcessBridge {
@@ -58,33 +61,58 @@ object PhoneProcessBridge {
             override fun onReceive(ctx: Context, intent: Intent?) {
                 if (intent?.action != BridgeContract.ACTION_SWITCH_DATA) return
                 val token = intent.getStringExtra(BridgeContract.EXTRA_TOKEN) ?: return
-                val slot = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SLOT, -1)
-                var subId = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SUB_ID, -1)
-                XposedBridge.log("TrafficManager: bridge recv token=$token slot=$slot subId=$subId")
-                if (subId < 0 && slot >= 0) {
-                    subId = resolveSubIdBySlot(ctx, slot)
+                val pending = goAsync()
+                val requestPackage = intent.getStringExtra(BridgeContract.EXTRA_REQUEST_PACKAGE)
+                BRIDGE_EXECUTOR.execute {
+                    try {
+                        val slot = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SLOT, -1)
+                        var subId = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SUB_ID, -1)
+                        XposedBridge.log("TrafficManager: bridge recv token=$token slot=$slot subId=$subId")
+                        if (subId < 0 && slot >= 0) {
+                            subId = resolveSubIdBySlot(ctx, slot)
+                        }
+                        val (ok, msg) = if (subId >= 0) {
+                            switchDefaultDataSubId(ctx, subId)
+                        } else {
+                            false to "invalid subId for slot=$slot"
+                        }
+                        sendResult(ctx, requestPackage, token, ok, msg)
+                    } finally {
+                        pending.finish()
+                    }
                 }
-                val (ok, msg) = if (subId >= 0) {
-                    switchDefaultDataSubId(ctx, subId)
-                } else {
-                    false to "invalid subId for slot=$slot"
-                }
-                sendResult(ctx, token, ok, msg)
             }
         }
 
         val filter = IntentFilter(BridgeContract.ACTION_SWITCH_DATA)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            context.registerReceiver(receiver, filter)
-        }
+        registerBridgeReceiver(context, receiver, filter)
         XposedBridge.log("TrafficManager: phone bridge receiver installed")
     }
 
-    private fun sendResult(context: Context, token: String, success: Boolean, message: String) {
+    private fun registerBridgeReceiver(
+        context: Context,
+        receiver: BroadcastReceiver,
+        filter: IntentFilter
+    ) {
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            BridgeContract.PERMISSION_INTERNAL_BRIDGE,
+            null,
+            ContextCompat.RECEIVER_EXPORTED
+        )
+    }
+
+    private fun sendResult(
+        context: Context,
+        requestPackage: String?,
+        token: String,
+        success: Boolean,
+        message: String
+    ) {
         val result = Intent(BridgeContract.ACTION_SWITCH_RESULT).apply {
+            requestPackage?.takeIf { it.isNotBlank() }?.let { `package` = it }
             putExtra(BridgeContract.EXTRA_TOKEN, token)
             putExtra(BridgeContract.EXTRA_SUCCESS, success)
             putExtra(BridgeContract.EXTRA_MESSAGE, message)
@@ -93,6 +121,7 @@ object PhoneProcessBridge {
         context.sendBroadcast(result)
     }
 
+    @SuppressLint("MissingPermission")
     private fun resolveSubIdBySlot(context: Context, slot: Int): Int {
         return runCatching {
             val sm = context.getSystemService(SubscriptionManager::class.java)
@@ -245,4 +274,6 @@ object PhoneProcessBridge {
         }
         return false
     }
+
+    private val BRIDGE_EXECUTOR = Executors.newSingleThreadExecutor()
 }

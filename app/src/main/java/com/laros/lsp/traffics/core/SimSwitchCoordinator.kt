@@ -103,7 +103,8 @@ class SimSwitchCoordinator(
         }
 
         if (target != null && !withinCooldown(config, nowMs)) {
-            switchTo(config, target, "leave_rule=$activeRuleId")
+            val result = switchTo(config, target, "leave_rule=$activeRuleId")
+            if (!result.success) return
         }
 
         activeRuleId = null
@@ -133,11 +134,12 @@ class SimSwitchCoordinator(
             if (!enoughMiss || !shouldSwitch) return
         }
         if (!config.noWifiImmediate && withinCooldown(config, nowMs)) return
-        switchTo(config, target, "no_wifi")
+        val result = switchTo(config, target, "no_wifi")
+        if (!result.success) return
         resetRuleSession()
     }
 
-    private fun switchTo(config: AppConfig, targetSlot: Int, reason: String) {
+    private fun switchTo(config: AppConfig, targetSlot: Int, reason: String): SwitchResult {
         val subId = resolver.subIdForSlot(targetSlot)
         val result = transportChain.switchDataSlot(
             context = context,
@@ -172,6 +174,7 @@ class SimSwitchCoordinator(
                 message = result.message
             )
         )
+        return result
     }
 
     private fun withinCooldown(config: AppConfig, nowMs: Long): Boolean {

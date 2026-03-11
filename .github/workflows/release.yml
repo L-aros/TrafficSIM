@@ -89,7 +89,7 @@ jobs:
               abi="unknown"
             fi
 
-            out="TrafficManager-v${version}-${abi}-release.apk"
+            out="TrafficSIM-v${version}-${abi}-release.apk"
             cp "$apk" "dist/$out"
           done
 

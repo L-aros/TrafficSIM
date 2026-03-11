@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
+import androidx.core.content.ContextCompat
 import com.laros.lsp.traffics.model.AppConfig
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
@@ -73,12 +73,12 @@ class XposedBroadcastTransport : SwitchTransport {
         }
 
         val filter = IntentFilter(BridgeContract.ACTION_SWITCH_RESULT)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            context.registerReceiver(receiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
 
         try {
             val req = Intent(BridgeContract.ACTION_SWITCH_DATA).apply {
@@ -87,6 +87,7 @@ class XposedBroadcastTransport : SwitchTransport {
                 putExtra(BridgeContract.EXTRA_TARGET_SLOT, targetSlot)
                 putExtra(BridgeContract.EXTRA_TARGET_SUB_ID, targetSubId ?: -1)
                 putExtra(BridgeContract.EXTRA_REASON, reason)
+                putExtra(BridgeContract.EXTRA_REQUEST_PACKAGE, context.packageName)
             }
             context.sendBroadcast(req)
 

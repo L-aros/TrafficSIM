@@ -1,6 +1,7 @@
 package com.laros.lsp.traffics.core
 
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 object RootShell {
     private val suBins = listOf(
@@ -39,12 +40,25 @@ object RootShell {
             val process = ProcessBuilder(suBin, "-c", command)
                 .redirectErrorStream(true)
                 .start()
+            val output = StringBuilder()
+            val readerThread = thread(start = true, isDaemon = true, name = "tm-root-reader") {
+                runCatching {
+                    process.inputStream.bufferedReader().useLines { lines ->
+                        lines.forEach { line ->
+                            output.appendLine(line)
+                        }
+                    }
+                }
+            }
             val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-            val out = process.inputStream.bufferedReader().readText().trim()
             if (!finished) {
                 process.destroyForcibly()
+                runCatching { process.inputStream.close() }
+                readerThread.join(200)
                 return "err: timeout"
             }
+            readerThread.join(500)
+            val out = output.toString().trim()
             val code = process.exitValue()
             if (code == 0) "ok: $out" else "err($code): $out"
         }.getOrElse { "err: ${it.javaClass.simpleName}: ${it.message}" }

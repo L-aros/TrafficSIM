@@ -61,14 +61,9 @@ class SwitchTransportChain(private val transports: List<SwitchTransport>) {
             }
             TimeUnit.MILLISECONDS.sleep(250)
         }
-        if (lastSeen != null) {
-            return VerifyOutcome(VerifyStatus.NOT_VERIFIED, "subscription_manager", lastSeen)
-        }
-        val rootSlot = RootShell.readGlobalDataSlot()
         return when {
-            rootSlot == null -> VerifyOutcome(VerifyStatus.UNKNOWN, "settings_global", null)
-            rootSlot == targetSlot -> VerifyOutcome(VerifyStatus.VERIFIED, "settings_global", rootSlot)
-            else -> VerifyOutcome(VerifyStatus.NOT_VERIFIED, "settings_global", rootSlot)
+            lastSeen == null -> VerifyOutcome(VerifyStatus.UNKNOWN, "subscription_manager", null)
+            else -> VerifyOutcome(VerifyStatus.NOT_VERIFIED, "subscription_manager", lastSeen)
         }
     }
 }
