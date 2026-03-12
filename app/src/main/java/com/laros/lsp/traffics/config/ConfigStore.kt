@@ -80,6 +80,7 @@ class ConfigStore(private val context: Context) {
         return AppConfig(
             enabled = root.optBoolean("enabled", true),
             powerSaveMode = root.optBoolean("powerSaveMode", true),
+            hideBackgroundTask = root.optBoolean("hideBackgroundTask", false),
             screenOnIntervalSec = root.optInt("screenOnIntervalSec", 20).coerceIn(5, 3600),
             screenOffIntervalSec = root.optInt("screenOffIntervalSec", 90).coerceIn(10, 3600),
             cooldownSec = root.optInt("cooldownSec", 90).coerceIn(10, 3600),
@@ -107,6 +108,7 @@ class ConfigStore(private val context: Context) {
         val root = JSONObject()
         root.put("enabled", config.enabled)
         root.put("powerSaveMode", config.powerSaveMode)
+        root.put("hideBackgroundTask", config.hideBackgroundTask)
         root.put("screenOnIntervalSec", config.screenOnIntervalSec)
         root.put("screenOffIntervalSec", config.screenOffIntervalSec)
         root.put("cooldownSec", config.cooldownSec)

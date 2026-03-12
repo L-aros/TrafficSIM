@@ -20,10 +20,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.laros.lsp.traffics.core.SwitchRunner
+import com.laros.lsp.traffics.util.TaskVisibilityController
 
 class AdvancedConfigActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdvancedConfigBinding
     private lateinit var configStore: ConfigStore
+    private var updatingHideBackgroundTask = false
     private var updatingNoWifiSwitch = false
     private var updatingNoWifiSlot = false
     private var updatingPowerMode = false
@@ -37,6 +39,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
         configStore = ConfigStore(this)
         binding.advancedConfigBackButton.setOnClickListener { finish() }
         loadConfigToEditor()
+        bindHideBackgroundTaskSwitch()
         bindNoWifiImmediateSwitch()
         bindNoWifiSlotGroup()
         bindPowerModeGroup()
@@ -63,9 +66,11 @@ class AdvancedConfigActivity : AppCompatActivity() {
     private fun loadConfigToEditor() {
         binding.configEditor.setText(configStore.loadRawJson())
         val cfg = configStore.load()
+        syncHideBackgroundTask(cfg.hideBackgroundTask)
         syncNoWifiImmediateSwitch(cfg.noWifiImmediate)
         syncNoWifiSlot(cfg.noWifiSlot)
         syncPowerMode(cfg.powerSaveMode)
+        TaskVisibilityController.sync(this, cfg.hideBackgroundTask)
     }
 
     private fun saveRawConfig() {
@@ -73,9 +78,11 @@ class AdvancedConfigActivity : AppCompatActivity() {
         val result = configStore.saveRawJson(raw)
         if (result.isSuccess) {
             val cfg = configStore.load()
+            syncHideBackgroundTask(cfg.hideBackgroundTask)
             syncNoWifiImmediateSwitch(cfg.noWifiImmediate)
             syncNoWifiSlot(cfg.noWifiSlot)
             syncPowerMode(cfg.powerSaveMode)
+            TaskVisibilityController.sync(this, cfg.hideBackgroundTask)
             applyRuntimeConfig(cfg, "advanced_json_save")
             Toast.makeText(this, R.string.status_config_saved, Toast.LENGTH_SHORT).show()
         } else {
@@ -92,9 +99,28 @@ class AdvancedConfigActivity : AppCompatActivity() {
     private fun persistConfig(config: AppConfig) {
         configStore.save(config)
         binding.configEditor.setText(configStore.toJson(config))
+        syncHideBackgroundTask(config.hideBackgroundTask)
         syncNoWifiImmediateSwitch(config.noWifiImmediate)
         syncNoWifiSlot(config.noWifiSlot)
         syncPowerMode(config.powerSaveMode)
+        TaskVisibilityController.sync(this, config.hideBackgroundTask)
+    }
+
+    private fun bindHideBackgroundTaskSwitch() {
+        binding.hideBackgroundTaskSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (updatingHideBackgroundTask) return@setOnCheckedChangeListener
+            val config = parseConfigFromEditor().getOrElse {
+                syncHideBackgroundTask(configStore.load().hideBackgroundTask)
+                return@setOnCheckedChangeListener
+            }
+            persistConfig(config.copy(hideBackgroundTask = isChecked))
+        }
+    }
+
+    private fun syncHideBackgroundTask(enabled: Boolean) {
+        updatingHideBackgroundTask = true
+        binding.hideBackgroundTaskSwitch.isChecked = enabled
+        updatingHideBackgroundTask = false
     }
 
     private fun bindNoWifiImmediateSwitch() {

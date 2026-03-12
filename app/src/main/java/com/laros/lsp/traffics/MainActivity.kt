@@ -1,8 +1,6 @@
 package com.laros.lsp.traffics
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.ConnectivityManager
@@ -15,7 +13,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -41,6 +38,7 @@ import com.laros.lsp.traffics.databinding.PageRulesContentBinding
 import com.laros.lsp.traffics.model.AppConfig
 import com.laros.lsp.traffics.model.SwitchRule
 import com.laros.lsp.traffics.service.RunModeController
+import com.laros.lsp.traffics.util.TaskVisibilityController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -69,20 +67,6 @@ class MainActivity : AppCompatActivity() {
         HOME, RULES, ADVANCED
     }
 
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        val denied = result.filterValues { !it }.keys
-        if (denied.isNotEmpty()) {
-            showStatus(getString(
-                R.string.status_missing_permissions,
-                denied.joinToString()
-            ))
-        } else {
-            showStatus(getString(R.string.status_permissions_granted))
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -92,10 +76,10 @@ class MainActivity : AppCompatActivity() {
         advancedBinding = PageAdvancedContentBinding.bind(binding.pageAdvanced)
         setupSystemBars()
         configStore = ConfigStore(this)
+        syncTaskVisibility()
         wifiSnapshotProvider = WifiSnapshotProvider(this)
         slotResolver = DataSlotResolver(this)
 
-        requestRuntimePermissions()
         bindDelayConfig()
         bindBottomNav()
         applyInitialPageSelection()
@@ -108,6 +92,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         registerPowerSaveNetworkCallback()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncTaskVisibility()
     }
 
     override fun onStop() {
@@ -130,6 +119,9 @@ class MainActivity : AppCompatActivity() {
         }
         advancedBinding.settingsListPermissionGuide.setOnClickListener {
             startActivity(Intent(this, PermissionGuideActivity::class.java))
+        }
+        advancedBinding.settingsListPermissionConfig.setOnClickListener {
+            startActivity(Intent(this, PermissionConfigActivity::class.java))
         }
 
         homeBinding.startButton.setOnClickListener {
@@ -591,32 +583,6 @@ class MainActivity : AppCompatActivity() {
     private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
     private fun color(resId: Int): Int = ContextCompat.getColor(this, resId)
 
-    private fun requestRuntimePermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.NEARBY_WIFI_DEVICES
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        ) {
-            permissions += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.POST_NOTIFICATIONS
-        }
-
-        val need = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (need.isNotEmpty()) {
-            permissionLauncher.launch(need.toTypedArray())
-        }
-    }
-
     private fun showStatus(message: String) {
         homeBinding.statusText.text = message
         statusRevertJob?.cancel()
@@ -702,6 +668,10 @@ class MainActivity : AppCompatActivity() {
             .setMessage(getString(R.string.dialog_msg_disclaimer))
             .setPositiveButton(getString(R.string.dialog_btn_confirm), null)
             .show()
+    }
+
+    private fun syncTaskVisibility() {
+        TaskVisibilityController.sync(this, configStore.load().hideBackgroundTask)
     }
 
     private fun updateLastSwitchSummary() {

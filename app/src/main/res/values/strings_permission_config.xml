@@ -1,0 +1,70 @@
+<resources>
+    <string name="settings_section_permissions">权限</string>
+    <string name="settings_item_permission_config">权限配置</string>
+    <string name="settings_item_permission_config_desc">权限申请、系统入口与后台保活指引</string>
+
+    <string name="title_hide_background_display">隐藏后台显示</string>
+    <string name="desc_hide_background_display">开启后会在应用退到后台时隐藏最近任务卡片，不影响通知栏和自动切卡能力。</string>
+
+    <string name="page_permission_config_title">权限配置</string>
+    <string name="permission_config_summary">本页集中处理 TrafficSIM 运行所需的权限与系统设置入口。标准权限会直接发起申请，系统或厂商专属项会尽量跳转到对应页面，若系统拦截则回退为手动指引。</string>
+
+    <string name="permission_config_system_title">设备与权限设置</string>
+    <string name="permission_config_system_summary">设备：%1$s %2$s\n系统：Android %3$s (API %4$d)\n厂商快捷入口：%5$s</string>
+    <string name="permission_config_vendor_supported">已适配 Xiaomi / Redmi / POCO 常用入口</string>
+    <string name="permission_config_vendor_generic">当前设备仅提供通用系统入口</string>
+
+    <string name="permission_config_card_runtime_title">设备基础权限</string>
+    <string name="permission_config_card_runtime_desc">用于识别 Wi-Fi 环境和当前数据卡，包括定位、电话状态与 Android 13+ 的附近 Wi-Fi 设备权限。</string>
+    <string name="permission_config_card_notification_title">通知权限</string>
+    <string name="permission_config_card_notification_desc">用于显示常驻服务通知、切卡结果通知和焦点通知。</string>
+    <string name="permission_config_card_background_location_title">后台定位</string>
+    <string name="permission_config_card_background_location_desc">用于应用不在前台时继续识别 Wi-Fi 变化，保证后台自动切卡可用。</string>
+    <string name="permission_config_card_auto_start_title">自启动</string>
+    <string name="permission_config_card_auto_start_desc">建议允许应用自启动，避免开机后自动切卡能力失效。</string>
+    <string name="permission_config_card_battery_title">省电策略</string>
+    <string name="permission_config_card_battery_desc">建议将应用加入无限制或允许后台活动，降低系统省电策略误杀服务的概率。</string>
+    <string name="permission_config_card_background_popup_title">后台弹出 / 后台活动</string>
+    <string name="permission_config_card_background_popup_desc">建议允许后台弹出界面或后台活动，减少系统限制导致的异常中断。</string>
+
+    <string name="permission_config_status_granted">当前状态：已授予</string>
+    <string name="permission_config_status_missing">当前状态：缺少 %1$s</string>
+    <string name="permission_config_status_disabled">当前状态：未开启</string>
+    <string name="permission_config_status_not_required">当前状态：当前系统不需要</string>
+    <string name="permission_config_status_manual_check">当前状态：系统不提供统一读取，请手动确认</string>
+    <string name="permission_config_status_foreground_required">当前状态：请先授予前台定位</string>
+    <string name="permission_config_status_notification_ready">当前状态：通知已可用</string>
+    <string name="permission_config_status_notification_settings_required">当前状态：通知被系统关闭，请前往设置开启</string>
+    <string name="permission_config_status_battery_ignored">当前状态：已加入电池优化白名单</string>
+    <string name="permission_config_status_battery_restricted">当前状态：仍受系统电池优化限制</string>
+
+    <string name="permission_config_hint_runtime">缺少这些权限时，Wi-Fi 规则识别、数据卡状态读取和自动切卡判断都会受影响。</string>
+    <string name="permission_config_hint_notification">如果通知被关闭，切卡结果和焦点通知将无法正常显示。</string>
+    <string name="permission_config_hint_background_location">Android 10 及以上需要单独授予。若只给前台定位，后台自动切卡可能失效。</string>
+    <string name="permission_config_hint_auto_start_xiaomi">手动路径参考：手机管家或安全中心 -> 权限管理 -> 自启动管理 -> TrafficSIM。</string>
+    <string name="permission_config_hint_auto_start_generic">不同厂商入口差异较大，若跳转失败，请在系统设置中搜索“自启动”或“后台管理”。</string>
+    <string name="permission_config_hint_battery_xiaomi">手动路径参考：设置 -> 应用设置 -> 应用管理 -> TrafficSIM -> 省电策略，改为无限制或允许后台活动。</string>
+    <string name="permission_config_hint_battery_generic">若系统没有直达入口，请到应用详情中的电池或后台管理页面，将策略改为无限制。</string>
+    <string name="permission_config_hint_background_popup_xiaomi">手动路径参考：设置 -> 应用设置 -> 应用管理 -> TrafficSIM -> 其他权限，允许后台弹出界面或后台活动。</string>
+    <string name="permission_config_hint_background_popup_generic">不同厂商入口差异较大，请在应用详情或权限管理中查找后台弹出、后台活动等选项。</string>
+
+    <string name="permission_config_action_request_runtime">申请基础权限</string>
+    <string name="permission_config_action_request_notification">请求通知权限</string>
+    <string name="permission_config_action_open_notification_settings">前往通知设置</string>
+    <string name="permission_config_action_request_background_location">申请后台定位</string>
+    <string name="permission_config_action_open_auto_start">打开自启动设置</string>
+    <string name="permission_config_action_open_battery">打开省电策略设置</string>
+    <string name="permission_config_action_open_background_popup">打开后台活动设置</string>
+    <string name="permission_config_action_done">已完成</string>
+    <string name="permission_config_action_refresh">刷新支持状态</string>
+
+    <string name="permission_config_label_fine_location">精确位置</string>
+    <string name="permission_config_label_coarse_location">大致位置</string>
+    <string name="permission_config_label_background_location">后台定位</string>
+    <string name="permission_config_label_nearby_wifi">附近 Wi-Fi 设备</string>
+    <string name="permission_config_label_phone_state">电话状态</string>
+    <string name="permission_config_label_notifications">通知</string>
+
+    <string name="permission_config_toast_foreground_location_first">请先授予基础定位权限，再申请后台定位。</string>
+    <string name="permission_config_toast_settings_fallback">未找到系统直达入口，已回退到应用详情页。\n%1$s</string>
+</resources>

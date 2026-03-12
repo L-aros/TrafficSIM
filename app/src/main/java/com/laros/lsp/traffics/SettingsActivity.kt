@@ -31,6 +31,9 @@ class SettingsActivity : AppCompatActivity() {
         binding.itemPermissionGuide.setOnClickListener {
             startActivity(Intent(this, PermissionGuideActivity::class.java))
         }
+        binding.itemPermissionConfig.setOnClickListener {
+            startActivity(Intent(this, PermissionConfigActivity::class.java))
+        }
     }
 
     private fun openAdvanced() {
