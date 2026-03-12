@@ -2,7 +2,7 @@
 
 - [使用教程](%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B)
 
-TrafficManager 是一个基于 LSPosed + Root 的双卡数据切换工具。
+TrafficManager 是一个基于 LSPosed 的双卡数据切换工具。
 
 ## 快速导航
 

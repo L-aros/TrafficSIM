@@ -14,13 +14,5 @@ data class AppConfig(
     val noWifiImmediate: Boolean = false,
     val logRetentionDays: Int = 7,
     val logMaxMb: Int = 10,
-    val appendDefaultRootTemplates: Boolean = true,
-    val rootCommandTemplates: List<String> = listOf(
-        "cmd phone set-default-data-subscription {subId}",
-        "cmd phone set-default-data-sub-id {subId}",
-        "cmd phone set-data-subscription {subId}",
-        "cmd phone set-preferred-data-subscription {subId}",
-        "settings put global multi_sim_data_call {slot}"
-    ),
     val rules: List<SwitchRule> = emptyList()
 )

@@ -179,15 +179,6 @@
                         android:textSize="13sp" />
 
                     <TextView
-                        android:id="@+id/selfCheckRoot"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/self_check_root_pending"
-                        android:textColor="@color/on_background"
-                        android:textSize="13sp" />
-
-                    <TextView
                         android:id="@+id/selfCheckLastSwitch"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

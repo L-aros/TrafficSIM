@@ -12,14 +12,11 @@ import android.os.Build
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import com.laros.lsp.traffics.log.LogStore
-import java.util.concurrent.TimeUnit
 
 class WifiSnapshotProvider(private val context: Context) {
     private val conn by lazy { context.getSystemService(ConnectivityManager::class.java) }
     private val wifi by lazy { context.applicationContext.getSystemService(WifiManager::class.java) }
     private val logStore by lazy { LogStore(context) }
-    private var lastRootProbeAtMs: Long = 0L
-    private var lastRootSnapshot: WifiSnapshot? = null
     private var lastDiagAtMs: Long = 0L
 
     fun current(): WifiSnapshot? {
@@ -30,20 +27,10 @@ class WifiSnapshotProvider(private val context: Context) {
         val normal = mergeSnapshot(merged, fromScan)?.let {
             WifiSnapshot(ssid = it.first, bssid = it.second)
         }
-        if (normal != null && (normal.ssid != null || normal.bssid != null)) {
-            return normal
-        }
-
-        val now = System.currentTimeMillis()
-        if (now - lastRootProbeAtMs >= 15_000L) {
-            lastRootProbeAtMs = now
-            lastRootSnapshot = readViaRoot()
-        }
-        val root = lastRootSnapshot
-        if (root == null || (root.ssid == null && root.bssid == null)) {
+        if (normal == null || (normal.ssid == null && normal.bssid == null)) {
             logFailureIfNeeded(fromCaps, fromManager, fromScan)
         }
-        return root
+        return normal
     }
 
     private fun normalize(raw: String?): String? {
@@ -117,31 +104,6 @@ class WifiSnapshotProvider(private val context: Context) {
         return (primary.first ?: secondary.first) to (primary.second ?: secondary.second)
     }
 
-    private fun readViaRoot(): WifiSnapshot? {
-        val dump = runAsRoot("dumpsys wifi")
-        if (dump.isBlank()) return null
-
-        val ssidCandidates = listOf(
-            Regex("""current SSID\(s\):\s*\[(?:")?([^"\],]+)""", RegexOption.IGNORE_CASE),
-            Regex("""\bssid\s*=\s*"([^"]+)"""", RegexOption.IGNORE_CASE),
-            Regex("""\bssid\s*[:=]\s*"([^"]+)"""", RegexOption.IGNORE_CASE),
-            Regex("""\bssid\s*[:=]\s*([^\s,;]+)""", RegexOption.IGNORE_CASE)
-        )
-        val ssid = ssidCandidates.asSequence()
-            .mapNotNull { it.find(dump)?.groupValues?.getOrNull(1) }
-            .map { normalize(it) }
-            .firstOrNull { !it.isNullOrBlank() }
-
-        val bssid = Regex("""\bbssid\s*[:=]?\s*([0-9a-fA-F:]{17})\b""", RegexOption.IGNORE_CASE)
-            .find(dump)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.let { normalizeBssid(it) }
-
-        if (ssid == null && bssid == null) return null
-        return WifiSnapshot(ssid = ssid, bssid = bssid)
-    }
-
     @SuppressLint("MissingPermission")
     private fun logFailureIfNeeded(
         fromCaps: Pair<String?, String?>?,
@@ -205,26 +167,5 @@ class WifiSnapshotProvider(private val context: Context) {
         } else {
             true
         }
-    }
-
-    private fun runAsRoot(command: String): String {
-        val suBins = listOf("su", "/system/bin/su", "/data/adb/ksu/bin/su")
-        for (suBin in suBins) {
-            val result = runCatching {
-                val process = ProcessBuilder(suBin, "-c", command)
-                    .redirectErrorStream(true)
-                    .start()
-                val finished = process.waitFor(5, TimeUnit.SECONDS)
-                if (!finished) {
-                    process.destroyForcibly()
-                    ""
-                } else {
-                    val out = process.inputStream.bufferedReader().use { it.readText() }
-                    if (process.exitValue() == 0) out else ""
-                }
-            }.getOrDefault("")
-            if (result.isNotBlank()) return result
-        }
-        return ""
     }
 }

@@ -21,8 +21,7 @@ TrafficSIM 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动
 - 支持冷却时间防抖（`cooldownSec`）
 - 支持离开 Wi-Fi 策略（`leaveDelaySec`、`leaveMissThreshold`、`revertOnLeave`）
 - 切卡链路支持：
-  - LSPosed 广播桥接（优先）
-  - Root 命令兜底
+  - LSPosed 广播桥接
 - 支持实时状态显示与“一键学习当前 Wi-Fi 规则”
 - 支持日志导出与切卡事件通知
 - 支持省电模式 / 常驻模式切换
@@ -35,7 +34,6 @@ TrafficSIM 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动
 ## 环境要求
 
 - Android 10+
-- Root（建议开启，以提高兼容性）
 - LSPosed（建议 Zygisk 版本）
 - 建议双卡设备
 
@@ -90,12 +88,6 @@ TrafficSIM 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动
   "noWifiImmediate": true,
   "logRetentionDays": 7,
   "logMaxMb": 10,
-  "appendDefaultRootTemplates": true,
-  "rootCommandTemplates": [
-    "cmd phone set-default-data-subscription {subId}",
-    "cmd phone set-data-subscription {subId}",
-    "settings put global multi_sim_data_call {slot}"
-  ],
   "rules": [
     {
       "id": "home_wifi",
@@ -117,8 +109,6 @@ TrafficSIM 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动
 - `fixedLeaveSlot`: 离开 Wi-Fi 时强制切到的卡（null 表示按逻辑决定）。
 - `noWifiSlot` / `noWifiImmediate`: 无 Wi-Fi 时的目标卡与是否立即切换。
 - `logRetentionDays` / `logMaxMb`: 日志保留天数与单日志大小上限。
-- `appendDefaultRootTemplates`: 是否在自定义 root 指令后自动补齐内置默认模板。
-- `rootCommandTemplates`: root 兜底时使用的系统命令模板（可保留多条）。
 - `rules`: Wi-Fi 规则列表，`priority` 越大优先级越高，`targetSlot` 0/1 表示 SIM1/SIM2。
 
 ## 常见排查
@@ -126,8 +116,7 @@ TrafficSIM 是一个 LSPosed 模块，用于根据 Wi-Fi SSID/BSSID 规则自动
 - 确认定位权限、附近设备（Wi-Fi）权限已授予
 - 确认系统“定位总开关”已开启
 - 查看日志目录：`Android/data/com.laros.lsp.traffics/files/logs/`
-- 若 LSPosed 链路失败，检查 root 兜底链路是否可用
-- 若自定义 `rootCommandTemplates` 包含 `accelerometer_rotation` / `user_rotation`，会被安全拦截以避免误改方向锁定
+- 若 LSPosed 链路失败，检查作用域、模块启用状态与系统兼容性
 
 ## 无 Wi-Fi 切卡说明
 

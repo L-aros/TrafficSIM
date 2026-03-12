@@ -17,14 +17,13 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.laros.lsp.traffics.config.ConfigStore
+import com.laros.lsp.traffics.config.SwitchStateStore
 import com.laros.lsp.traffics.core.DataSlotResolver
-import com.laros.lsp.traffics.core.RootShell
 import com.laros.lsp.traffics.core.SwitchEvent
 import com.laros.lsp.traffics.core.SwitchEventNotifier
 import com.laros.lsp.traffics.core.WifiSnapshotProvider
 import com.laros.lsp.traffics.core.XiaomiFocusNotificationCompat
 import com.laros.lsp.traffics.databinding.ActivitySelfCheckBinding
-import com.laros.lsp.traffics.config.SwitchStateStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,9 +143,6 @@ class SelfCheckActivity : AppCompatActivity() {
                 val powerText = getString(
                     if (data.powerSaveMode) R.string.label_powersave else R.string.label_persistent
                 )
-                val rootText = getString(
-                    if (data.rootAvailable) R.string.label_root_available else R.string.label_root_unavailable
-                )
                 val lastSwitchText = if (data.lastSwitchAtMs <= 0L) {
                     getString(R.string.label_last_switch_none)
                 } else {
@@ -173,8 +169,6 @@ class SelfCheckActivity : AppCompatActivity() {
                     getString(R.string.self_check_power_mode, powerText)
                 binding.selfCheckRules.text =
                     getString(R.string.self_check_rules, data.rulesCount)
-                binding.selfCheckRoot.text =
-                    getString(R.string.self_check_root, rootText)
                 binding.selfCheckLastSwitch.text =
                     getString(R.string.self_check_last_switch, lastSwitchText)
             } finally {
@@ -195,7 +189,6 @@ class SelfCheckActivity : AppCompatActivity() {
         val enabled: Boolean,
         val powerSaveMode: Boolean,
         val rulesCount: Int,
-        val rootAvailable: Boolean,
         val lastSwitchAtMs: Long
     )
 
@@ -224,7 +217,6 @@ class SelfCheckActivity : AppCompatActivity() {
             enabled = config.enabled,
             powerSaveMode = config.powerSaveMode,
             rulesCount = config.rules.size,
-            rootAvailable = isRootAvailable(),
             lastSwitchAtMs = state
         )
     }
@@ -257,10 +249,6 @@ class SelfCheckActivity : AppCompatActivity() {
             Manifest.permission.POST_NOTIFICATIONS -> getString(R.string.perm_post_notifications)
             else -> permission.substringAfterLast('.')
         }
-    }
-
-    private fun isRootAvailable(): Boolean {
-        return RootShell.hasRootAccess()
     }
 
     private fun triggerFocusNotificationDebug(status: XiaomiFocusNotificationCompat.FocusStatus) {
