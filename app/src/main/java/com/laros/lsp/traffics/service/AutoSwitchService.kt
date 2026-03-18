@@ -13,7 +13,9 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.laros.lsp.traffics.R
 import com.laros.lsp.traffics.config.ConfigStore
 import com.laros.lsp.traffics.core.DataSlotResolver
@@ -94,7 +96,16 @@ class AutoSwitchService : Service() {
         logStore.append("service started")
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_RUN_ONCE_NOW) {
+            handler.post {
+                runCatching { tickOnce() }
+                    .onFailure { logStore.append("tick failed: ${it.message}") }
+            }
+            Log.i("TrafficManager", "service run-once requested")
+        }
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
@@ -161,5 +172,23 @@ class AutoSwitchService : Service() {
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setOngoing(true)
             .build()
+    }
+
+    companion object {
+        private const val ACTION_RUN_ONCE_NOW = "com.laros.lsp.traffics.action.RUN_ONCE_NOW"
+
+        fun requestRunOnce(context: Context) {
+            val appContext = context.applicationContext
+            val intent = Intent(appContext, AutoSwitchService::class.java).apply {
+                action = ACTION_RUN_ONCE_NOW
+            }
+            runCatching { appContext.startService(intent) }
+                .onFailure {
+                    Log.w("TrafficManager", "request run-once failed: ${it.message}")
+                    runCatching {
+                        ContextCompat.startForegroundService(appContext, intent)
+                    }
+                }
+        }
     }
 }

@@ -17,18 +17,20 @@ class WifiSnapshotProvider(private val context: Context) {
     private val conn by lazy { context.getSystemService(ConnectivityManager::class.java) }
     private val wifi by lazy { context.applicationContext.getSystemService(WifiManager::class.java) }
     private val logStore by lazy { LogStore(context) }
+    private val cacheStore by lazy { WifiSnapshotCacheStore(context.applicationContext) }
     private var lastDiagAtMs: Long = 0L
 
     fun current(): WifiSnapshot? {
         val fromCaps = readFromNetworkCapabilities()
         val fromManager = readFromWifiManager()
-        val merged = mergeSnapshot(fromCaps, fromManager)
+        val fromCache = readFromBroadcastCache()
+        val merged = mergeSnapshot(mergeSnapshot(fromCaps, fromManager), fromCache)
         val fromScan = readFromScanResults(merged)
         val normal = mergeSnapshot(merged, fromScan)?.let {
             WifiSnapshot(ssid = it.first, bssid = it.second)
         }
         if (normal == null || (normal.ssid == null && normal.bssid == null)) {
-            logFailureIfNeeded(fromCaps, fromManager, fromScan)
+            logFailureIfNeeded(fromCaps, fromManager, fromCache, fromScan)
         }
         return normal
     }
@@ -76,6 +78,11 @@ class WifiSnapshotProvider(private val context: Context) {
         }.getOrNull()
     }
 
+    private fun readFromBroadcastCache(): Pair<String?, String?>? {
+        val snapshot = cacheStore.getFresh() ?: return null
+        return snapshot.ssid to snapshot.bssid
+    }
+
     @SuppressLint("MissingPermission")
     private fun readFromScanResults(hint: Pair<String?, String?>?): Pair<String?, String?>? {
         if (!canReadScanResults()) return null
@@ -108,6 +115,7 @@ class WifiSnapshotProvider(private val context: Context) {
     private fun logFailureIfNeeded(
         fromCaps: Pair<String?, String?>?,
         fromManager: Pair<String?, String?>?,
+        fromCache: Pair<String?, String?>?,
         fromScan: Pair<String?, String?>?
     ) {
         val now = System.currentTimeMillis()
@@ -130,7 +138,8 @@ class WifiSnapshotProvider(private val context: Context) {
 
         logStore.append(
             "wifi_snapshot: empty caps=${pairToLabel(fromCaps)} " +
-                "manager=${pairToLabel(fromManager)} scan=${pairToLabel(fromScan)} " +
+                "manager=${pairToLabel(fromManager)} cache=${pairToLabel(fromCache)} " +
+                "scan=${pairToLabel(fromScan)} " +
                 "scanCount=$scanCount permFine=$fine permCoarse=$coarse " +
                 "permNearbyWifi=$nearby locationEnabled=$locationEnabled"
         )
