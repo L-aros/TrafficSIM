@@ -91,7 +91,7 @@ class XposedBroadcastTransport : SwitchTransport {
             }
             context.sendBroadcast(req)
 
-            val ok = latch.await(1500, TimeUnit.MILLISECONDS)
+            val ok = latch.await(BRIDGE_RESULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
             return if (ok) {
                 result.get()
             } else {
@@ -100,5 +100,9 @@ class XposedBroadcastTransport : SwitchTransport {
         } finally {
             runCatching { context.unregisterReceiver(receiver) }
         }
+    }
+
+    private companion object {
+        const val BRIDGE_RESULT_TIMEOUT_MS = 4500L
     }
 }

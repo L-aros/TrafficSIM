@@ -3,17 +3,12 @@ package com.laros.lsp.traffics.core
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.util.Log
 import java.util.Locale
 
 class FocusDebugReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != SwitchEventNotifier.ACTION_DEBUG_FOCUS_NOTIFICATION) return
-        if (!isDebuggable(context)) {
-            Log.w(TAG, "ignore debug focus broadcast on non-debuggable build")
-            return
-        }
 
         val status = parseStatus(intent.getStringExtra(SwitchEventNotifier.EXTRA_DEBUG_STATUS))
         val targetSlot = intent.getIntExtra(SwitchEventNotifier.EXTRA_DEBUG_TARGET_SLOT, 0).coerceIn(0, 1)
@@ -41,10 +36,6 @@ class FocusDebugReceiver : BroadcastReceiver() {
                 message = message
             )
         )
-    }
-
-    private fun isDebuggable(context: Context): Boolean {
-        return context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
     }
 
     private fun parseStatus(raw: String?): XiaomiFocusNotificationCompat.FocusStatus {

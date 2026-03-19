@@ -3,6 +3,7 @@ package com.laros.lsp.traffics.config
 import android.content.Context
 import com.laros.lsp.traffics.model.AppConfig
 import com.laros.lsp.traffics.model.SwitchRule
+import com.laros.lsp.traffics.util.FocusWhitelistBypassController
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -18,6 +19,7 @@ class ConfigStore(private val context: Context) {
 
     fun save(config: AppConfig) {
         prefs.edit().putString(KEY_JSON, toJson(config)).apply()
+        FocusWhitelistBypassController.sync(context, config.removeFocusWhitelistCheck)
     }
 
     fun saveRawJson(raw: String): Result<Unit> {
@@ -79,7 +81,8 @@ class ConfigStore(private val context: Context) {
 
         return AppConfig(
             enabled = root.optBoolean("enabled", true),
-            powerSaveMode = root.optBoolean("powerSaveMode", true),
+            powerSaveMode = root.optBoolean("powerSaveMode", false),
+            removeFocusWhitelistCheck = root.optBoolean("removeFocusWhitelistCheck", true),
             hideBackgroundTask = root.optBoolean("hideBackgroundTask", false),
             screenOnIntervalSec = root.optInt("screenOnIntervalSec", 20).coerceIn(5, 3600),
             screenOffIntervalSec = root.optInt("screenOffIntervalSec", 90).coerceIn(10, 3600),
@@ -108,6 +111,7 @@ class ConfigStore(private val context: Context) {
         val root = JSONObject()
         root.put("enabled", config.enabled)
         root.put("powerSaveMode", config.powerSaveMode)
+        root.put("removeFocusWhitelistCheck", config.removeFocusWhitelistCheck)
         root.put("hideBackgroundTask", config.hideBackgroundTask)
         root.put("screenOnIntervalSec", config.screenOnIntervalSec)
         root.put("screenOffIntervalSec", config.screenOffIntervalSec)

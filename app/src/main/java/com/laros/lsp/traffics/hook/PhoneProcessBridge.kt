@@ -1,62 +1,91 @@
 package com.laros.lsp.traffics.hook
 
 import android.annotation.SuppressLint
+import android.os.Process
 import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.telephony.SubscriptionManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.laros.lsp.traffics.core.BridgeContract
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
+import io.github.libxposed.api.XposedInterface
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 object PhoneProcessBridge {
-    private val installed = AtomicBoolean(false)
+    private val hooksInstalled = AtomicBoolean(false)
+    private val receiverInstalled = AtomicBoolean(false)
+
     @Volatile
     private var processClassLoader: ClassLoader? = null
 
-    fun install(classLoader: ClassLoader) {
+    @Volatile
+    private var xposed: XposedInterface? = null
+
+    fun install(xposedApi: XposedInterface, classLoader: ClassLoader, processName: String) {
+        xposed = xposedApi
         processClassLoader = classLoader
-        runCatching {
-            XposedHelpers.findAndHookMethod(
-            "com.android.phone.PhoneGlobals",
-            classLoader,
-            "onCreate",
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val context = param.thisObject as? Context ?: return
-                    registerReceiver(context)
-                }
-            }
-        )
-        }.onFailure {
-            XposedBridge.log("TrafficManager: PhoneGlobals hook failed, fallback to Application hook: ${it.message}")
+        if (!hooksInstalled.compareAndSet(false, true)) return
+        if (!markProcessFlag(PROCESS_FLAG_HOOKS_INSTALLED)) {
+            log(Log.INFO, "skip duplicate bridge hooks for process=$processName pid=${Process.myPid()}")
+            return
         }
 
-        XposedBridge.hookAllMethods(
-            Application::class.java,
-            "onCreate",
-            object : XC_MethodHook() {
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    val app = param.thisObject as? Application ?: return
-                    if (!BridgeContract.PHONE_PACKAGES.contains(app.packageName)) return
-                    processClassLoader = app.classLoader
-                    registerReceiver(app)
-                }
+        log(Log.INFO, "install bridge hooks for process=$processName")
+
+        runCatching {
+            installPhoneGlobalsHook(xposedApi, classLoader)
+        }.onFailure {
+            log(Log.WARN, "PhoneGlobals hook failed, fallback to Application hook", it)
+        }
+
+        runCatching {
+            installApplicationHook(xposedApi)
+        }.onFailure {
+            log(Log.ERROR, "Application hook failed", it)
+        }
+    }
+
+    private fun installPhoneGlobalsHook(xposedApi: XposedInterface, classLoader: ClassLoader) {
+        val phoneGlobalsClass = Class.forName("com.android.phone.PhoneGlobals", false, classLoader)
+        val onCreate = phoneGlobalsClass.getDeclaredMethod("onCreate").apply {
+            isAccessible = true
+        }
+        xposedApi.hook(onCreate).intercept { chain ->
+            val result = chain.proceed()
+            val context = chain.thisObject as? Context
+            if (context != null) {
+                processClassLoader = context.classLoader
+                registerReceiver(context)
             }
-        )
+            result
+        }
+    }
+
+    private fun installApplicationHook(xposedApi: XposedInterface) {
+        val onCreate = Application::class.java.getDeclaredMethod("onCreate")
+        xposedApi.hook(onCreate).intercept { chain ->
+            val result = chain.proceed()
+            val app = chain.thisObject as? Application
+            if (app != null && BridgeContract.PHONE_PACKAGES.contains(app.packageName)) {
+                processClassLoader = app.classLoader
+                registerReceiver(app)
+            }
+            result
+        }
     }
 
     private fun registerReceiver(context: Context) {
-        if (!installed.compareAndSet(false, true)) return
+        if (!receiverInstalled.compareAndSet(false, true)) return
+        if (!markProcessFlag(PROCESS_FLAG_RECEIVER_INSTALLED)) {
+            log(Log.INFO, "skip duplicate bridge receiver for pid=${Process.myPid()} package=${context.packageName}")
+            return
+        }
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent?) {
                 if (intent?.action != BridgeContract.ACTION_SWITCH_DATA) return
@@ -67,7 +96,7 @@ object PhoneProcessBridge {
                     try {
                         val slot = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SLOT, -1)
                         var subId = intent.getIntExtra(BridgeContract.EXTRA_TARGET_SUB_ID, -1)
-                        XposedBridge.log("TrafficManager: bridge recv token=$token slot=$slot subId=$subId")
+                        log(Log.INFO, "bridge recv token=$token slot=$slot subId=$subId")
                         if (subId < 0 && slot >= 0) {
                             subId = resolveSubIdBySlot(ctx, slot)
                         }
@@ -86,7 +115,7 @@ object PhoneProcessBridge {
 
         val filter = IntentFilter(BridgeContract.ACTION_SWITCH_DATA)
         registerBridgeReceiver(context, receiver, filter)
-        XposedBridge.log("TrafficManager: phone bridge receiver installed")
+        log(Log.INFO, "phone bridge receiver installed")
     }
 
     private fun registerBridgeReceiver(
@@ -164,7 +193,7 @@ object PhoneProcessBridge {
             }
         }
         val all = traces.joinToString(" || ")
-        XposedBridge.log("TrafficManager switchDefaultDataSubId failed: $all")
+        log(Log.ERROR, "switchDefaultDataSubId failed: $all")
         return false to all
     }
 
@@ -275,5 +304,27 @@ object PhoneProcessBridge {
         return false
     }
 
+    private fun markProcessFlag(flag: String): Boolean {
+        val key = "$PROCESS_FLAG_PREFIX.$flag.${Process.myPid()}"
+        synchronized(System::class.java) {
+            if (System.getProperty(key) == "1") return false
+            System.setProperty(key, "1")
+            return true
+        }
+    }
+
+    private fun log(priority: Int, message: String, throwable: Throwable? = null) {
+        val api = xposed ?: return
+        if (throwable == null) {
+            api.log(priority, TAG, message)
+        } else {
+            api.log(priority, TAG, message, throwable)
+        }
+    }
+
+    private const val TAG = "TrafficManager"
+    private const val PROCESS_FLAG_PREFIX = "com.laros.lsp.traffics.bridge"
+    private const val PROCESS_FLAG_HOOKS_INSTALLED = "hooks_installed"
+    private const val PROCESS_FLAG_RECEIVER_INSTALLED = "receiver_installed"
     private val BRIDGE_EXECUTOR = Executors.newSingleThreadExecutor()
 }

@@ -24,6 +24,7 @@ import com.laros.lsp.traffics.core.SwitchEventNotifier
 import com.laros.lsp.traffics.core.WifiSnapshotProvider
 import com.laros.lsp.traffics.core.XiaomiFocusNotificationCompat
 import com.laros.lsp.traffics.databinding.ActivitySelfCheckBinding
+import com.laros.lsp.traffics.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -193,16 +194,15 @@ class SelfCheckActivity : AppCompatActivity() {
     )
 
     private fun collectSelfCheckData(): SelfCheckData {
-        val fineGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val fineGranted = PermissionHelper.hasPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarseGranted = PermissionHelper.hasPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
         val nearbyGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES) == PackageManager.PERMISSION_GRANTED
+            PermissionHelper.hasPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
             true
         }
-        val missing = requiredPermissions().filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }.map { permissionLabel(it) }
+        val missing = PermissionHelper.requiredPermissionsForSelfCheck(this)
+            .map { PermissionHelper.permissionLabel(this, it) }
         val snapshot = wifiSnapshotProvider.current()
         val config = configStore.load()
         val state = SwitchStateStore(this).getLastSwitchAtMs()
@@ -221,39 +221,9 @@ class SelfCheckActivity : AppCompatActivity() {
         )
     }
 
-    private fun requiredPermissions(): List<String> {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.NEARBY_WIFI_DEVICES
-            permissions += Manifest.permission.POST_NOTIFICATIONS
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        ) {
-            permissions += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        }
-        return permissions
-    }
-
-    private fun permissionLabel(permission: String): String {
-        return when (permission) {
-            Manifest.permission.ACCESS_FINE_LOCATION -> getString(R.string.perm_fine_location)
-            Manifest.permission.ACCESS_COARSE_LOCATION -> getString(R.string.perm_coarse_location)
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION -> getString(R.string.perm_background_location)
-            Manifest.permission.NEARBY_WIFI_DEVICES -> getString(R.string.perm_nearby_wifi)
-            Manifest.permission.READ_PHONE_STATE -> getString(R.string.perm_read_phone_state)
-            Manifest.permission.POST_NOTIFICATIONS -> getString(R.string.perm_post_notifications)
-            else -> permission.substringAfterLast('.')
-        }
-    }
-
     private fun triggerFocusNotificationDebug(status: XiaomiFocusNotificationCompat.FocusStatus) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            !PermissionHelper.notificationPermissionGranted(this)
         ) {
             Toast.makeText(this, R.string.status_focus_debug_permission_missing, Toast.LENGTH_SHORT).show()
             return

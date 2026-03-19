@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TrafficSIM</title>
+    <meta name="description" content="TrafficSIM 是一个 LSPosed 模块，可根据 Wi-Fi SSID / BSSID 规则自动切换默认数据卡。">
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="topbar">
+            <a class="brand" href="#top" aria-label="TrafficSIM 首页">
+                <span class="brand-mark">T</span>
+                <span class="brand-text">TrafficSIM</span>
+            </a>
+            <nav class="topnav" aria-label="主导航">
+                <a href="#overview">首页</a>
+                <a href="#quickstart">快速开始</a>
+                <a href="#features">功能</a>
+                <a href="#compatibility">兼容性</a>
+            </nav>
+            <div class="topnav-actions">
+                <a class="ghost-link" href="https://github.com/L-aros/TrafficSIM" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+        </header>
+
+        <main>
+            <section class="hero" id="overview">
+                <div class="hero-copy">
+                    <p class="eyebrow">TrafficSIM</p>
+                    <h1>按 Wi-Fi 规则自动切换数据卡的 LSPosed 模块</h1>
+                    <p class="hero-summary">
+                        围绕 SSID / BSSID 规则、后台常驻、权限自检与焦点通知调试构建。
+                        当前版本仅保留 LSPosed 单链路切卡，不再提供 Root 兜底。
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="https://github.com/L-aros/TrafficSIM/releases" target="_blank" rel="noreferrer">查看发布</a>
+                        <a class="button button-secondary" href="#quickstart">快速开始</a>
+                        <a class="button button-muted" href="https://github.com/L-aros/TrafficSIM/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
+                    </div>
+                    <ul class="hero-notes">
+                        <li>支持规则优先级、离开 Wi-Fi 回切、无 Wi-Fi 目标卡与即时切换。</li>
+                        <li>内置权限说明、权限配置、自检页与日志导出。</li>
+                        <li>主要验证环境为小米 HyperOS，其他 ROM 仍需持续补样本。</li>
+                    </ul>
+                </div>
+
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-glow"></div>
+                    <svg class="hero-emblem" viewBox="0 0 320 320" role="img" aria-label="TrafficSIM 标志图形">
+                        <defs>
+                            <linearGradient id="outerGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#51a8ff"></stop>
+                                <stop offset="100%" stop-color="#1d4eff"></stop>
+                            </linearGradient>
+                            <linearGradient id="innerGlow" x1="20%" y1="10%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#79d4ff"></stop>
+                                <stop offset="100%" stop-color="#3450cc"></stop>
+                            </linearGradient>
+                            <linearGradient id="chipGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#eff8ff"></stop>
+                                <stop offset="100%" stop-color="#bfd4f4"></stop>
+                            </linearGradient>
+                        </defs>
+                        <polygon points="160,28 261,86 261,202 160,260 59,202 59,86" fill="url(#outerGlow)"></polygon>
+                        <polygon points="160,58 233,101 233,187 160,230 87,187 87,101" fill="url(#innerGlow)"></polygon>
+                        <polygon points="160,86 205,112 205,174 160,200 115,174 115,112" fill="#28438f"></polygon>
+                        <rect x="127" y="100" width="66" height="86" rx="18" fill="url(#chipGlow)"></rect>
+                    </svg>
+                </div>
+            </section>
+
+            <section class="feature-grid" id="features">
+                <article class="feature-card">
+                    <span class="feature-icon">01</span>
+                    <h2>规则驱动</h2>
+                    <p>按 SSID / BSSID 识别 Wi-Fi 环境，支持优先级、冷却时间与离开规则回切。</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon">02</span>
+                    <h2>单链路切卡</h2>
+                    <p>通过 LSPosed 电话进程桥接执行默认数据卡切换，减少 Root 依赖与分叉逻辑。</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon">03</span>
+                    <h2>可调试通知</h2>
+                    <p>保留焦点通知与切卡事件通知链路，便于验证大岛、小岛与普通通知展示状态。</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon">04</span>
+                    <h2>权限与保活</h2>
+                    <p>应用内提供权限说明、权限配置与厂商设置跳转，降低后台受限导致的误判。</p>
+                </article>
+            </section>
+
+            <section class="detail-section" id="quickstart">
+                <div class="section-heading">
+                    <p class="eyebrow">Quick Start</p>
+                    <h2>三步进入可用状态</h2>
+                </div>
+                <div class="step-grid">
+                    <article class="step-card">
+                        <span class="step-index">1</span>
+                        <h3>安装与启用</h3>
+                        <p>安装与设备 ABI 匹配的 APK，在 LSPosed 中启用模块并勾选推荐电话作用域。</p>
+                    </article>
+                    <article class="step-card">
+                        <span class="step-index">2</span>
+                        <h3>授予权限</h3>
+                        <p>授予定位、附近 Wi-Fi、电话状态和通知权限，并确认系统定位总开关已开启。</p>
+                    </article>
+                    <article class="step-card">
+                        <span class="step-index">3</span>
+                        <h3>学习或创建规则</h3>
+                        <p>通过“学习 -&gt; SIM1 / SIM2”快速生成规则，或手动指定 SSID、BSSID 与目标卡槽。</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="detail-section">
+                <div class="section-heading">
+                    <p class="eyebrow">Workflow</p>
+                    <h2>围绕常驻模式做了更重的稳定性设计</h2>
+                </div>
+                <div class="timeline-grid">
+                    <article class="timeline-card">
+                        <h3>Wi-Fi 快照</h3>
+                        <p>在连接切换与 captive portal 场景下缓存 SSID / BSSID，提高规则匹配稳定性。</p>
+                    </article>
+                    <article class="timeline-card">
+                        <h3>广播补跑</h3>
+                        <p>收到 Wi-Fi 或网络变化后立即补跑规则评估，避免仅靠轮询导致的延迟。</p>
+                    </article>
+                    <article class="timeline-card">
+                        <h3>通知反馈</h3>
+                        <p>切卡结果、焦点通知与自检结果分层展示，方便用户确认“命中规则”和“切卡成功”不是一回事。</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="detail-section" id="compatibility">
+                <div class="section-heading">
+                    <p class="eyebrow">Compatibility</p>
+                    <h2>兼容性说明与边界</h2>
+                </div>
+                <div class="compat-grid">
+                    <article class="compat-card">
+                        <h3>当前重点验证</h3>
+                        <p>小米 HyperOS 环境优先，双卡设备与高通电话栈验证更完整。</p>
+                    </article>
+                    <article class="compat-card">
+                        <h3>其他 ROM</h3>
+                        <p>One UI、ColorOS、OriginOS 等系统可能因电话进程、保活策略或权限入口差异而出现兼容偏差。</p>
+                    </article>
+                    <article class="compat-card">
+                        <h3>作用域建议</h3>
+                        <p>推荐勾选 `com.android.phone`、`com.xiaomi.phone`、`com.qti.phone`、`com.qualcomm.qti.telephonyservice`、`com.android.services.telephony`、`com.android.telephony`；必要时再尝试 `android`。</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="detail-section">
+                <div class="cta-panel">
+                    <div>
+                        <p class="eyebrow">Release</p>
+                        <h2>获取最新版本与问题反馈入口</h2>
+                        <p>发布 APK、更新日志与源码都保留在主仓库。签名证书自 v1.0.4 起已更换，旧安装包无法直接覆盖更新。</p>
+                    </div>
+                    <div class="cta-actions">
+                        <a class="button button-primary" href="https://github.com/L-aros/TrafficSIM/releases" target="_blank" rel="noreferrer">前往 Releases</a>
+                        <a class="button button-secondary" href="https://github.com/L-aros/TrafficSIM/issues" target="_blank" rel="noreferrer">提交 Issue</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>TrafficSIM</span>
+            <span>LSPosed · Wi-Fi Rules · Dual SIM</span>
+        </footer>
+    </div>
+</body>
+</html>

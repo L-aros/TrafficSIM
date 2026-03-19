@@ -10,48 +10,56 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import com.laros.lsp.traffics.databinding.ActivityPermissionConfigBinding
+import com.laros.lsp.traffics.util.PermissionHelper
 import com.laros.lsp.traffics.util.PermissionSettingsNavigator
 
 class PermissionConfigActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPermissionConfigBinding
+    private var autoRequestEnabled = false
+    private val attemptedAutoRequestSteps = mutableSetOf<String>()
 
     private val runtimePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         refreshState()
+        continueAutoRequest()
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
         refreshState()
+        continueAutoRequest()
     }
 
     private val backgroundLocationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
         refreshState()
+        continueAutoRequest()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPermissionConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        autoRequestEnabled = intent.getBooleanExtra(EXTRA_AUTO_REQUEST, false)
         setupSystemBars()
         bindClicks()
         refreshState()
+        binding.root.post { continueAutoRequest() }
     }
 
     override fun onResume() {
         super.onResume()
         refreshState()
+        binding.root.post { continueAutoRequest() }
     }
 
     private fun bindClicks() {
@@ -91,7 +99,7 @@ class PermissionConfigActivity : AppCompatActivity() {
             )
         )
 
-        val runtimeMissing = missingRuntimePermissions()
+        val runtimeMissing = PermissionHelper.missingRuntimePermissions(this)
         if (runtimeMissing.isEmpty()) {
             binding.runtimePermissionStatusText.text = getString(R.string.permission_config_status_granted)
             binding.runtimePermissionActionButton.text = getString(R.string.permission_config_action_done)
@@ -108,8 +116,8 @@ class PermissionConfigActivity : AppCompatActivity() {
         }
         binding.runtimePermissionHintText.text = getString(R.string.permission_config_hint_runtime)
 
-        val notificationsGranted = notificationPermissionGranted()
-        val notificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
+        val notificationsGranted = PermissionHelper.notificationPermissionGranted(this)
+        val notificationsEnabled = PermissionHelper.areNotificationsEnabled(this)
         when {
             notificationsGranted && notificationsEnabled -> {
                 binding.notificationPermissionStatusText.text =
@@ -138,13 +146,8 @@ class PermissionConfigActivity : AppCompatActivity() {
         binding.notificationPermissionHintText.text =
             getString(R.string.permission_config_hint_notification)
 
-        val foregroundLocationGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
-            hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-        val backgroundLocationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            hasPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            true
-        }
+        val foregroundLocationGranted = PermissionHelper.hasForegroundLocation(this)
+        val backgroundLocationGranted = PermissionHelper.hasBackgroundLocation(this)
         when {
             Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> {
                 binding.backgroundLocationStatusText.text =
@@ -213,7 +216,7 @@ class PermissionConfigActivity : AppCompatActivity() {
     }
 
     private fun requestRuntimePermissions() {
-        val need = missingRuntimePermissions()
+        val need = PermissionHelper.missingRuntimePermissions(this)
         if (need.isEmpty()) {
             refreshState()
             return
@@ -223,7 +226,7 @@ class PermissionConfigActivity : AppCompatActivity() {
 
     private fun handleNotificationAction() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !hasPermission(Manifest.permission.POST_NOTIFICATIONS)
+            PermissionHelper.needsNotificationRuntimePermission(this)
         ) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             return
@@ -236,8 +239,7 @@ class PermissionConfigActivity : AppCompatActivity() {
             refreshState()
             return
         }
-        val foregroundLocationGranted = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
-            hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+        val foregroundLocationGranted = PermissionHelper.hasForegroundLocation(this)
         if (!foregroundLocationGranted) {
             Toast.makeText(
                 this,
@@ -250,42 +252,37 @@ class PermissionConfigActivity : AppCompatActivity() {
         backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
     }
 
-    private fun missingRuntimePermissions(): List<String> {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.NEARBY_WIFI_DEVICES
-        }
-        return permissions.filterNot(::hasPermission)
-    }
-
-    private fun notificationPermissionGranted(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            hasPermission(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            true
-        }
-    }
-
-    private fun hasPermission(permission: String): Boolean {
-        return ContextCompat.checkSelfPermission(this, permission) ==
-            PackageManager.PERMISSION_GRANTED
-    }
-
     private fun permissionLabel(permission: String): String {
         return when (permission) {
-            Manifest.permission.ACCESS_FINE_LOCATION ->
-                getString(R.string.permission_config_label_fine_location)
-            Manifest.permission.ACCESS_COARSE_LOCATION ->
-                getString(R.string.permission_config_label_coarse_location)
-            Manifest.permission.READ_PHONE_STATE ->
-                getString(R.string.permission_config_label_phone_state)
-            Manifest.permission.NEARBY_WIFI_DEVICES ->
-                getString(R.string.permission_config_label_nearby_wifi)
-            else -> permission.substringAfterLast('.')
+            Manifest.permission.ACCESS_FINE_LOCATION -> getString(R.string.permission_config_label_fine_location)
+            Manifest.permission.ACCESS_COARSE_LOCATION -> getString(R.string.permission_config_label_coarse_location)
+            Manifest.permission.READ_PHONE_STATE -> getString(R.string.permission_config_label_phone_state)
+            Manifest.permission.NEARBY_WIFI_DEVICES -> getString(R.string.permission_config_label_nearby_wifi)
+            else -> PermissionHelper.permissionLabel(this, permission)
+        }
+    }
+
+    private fun continueAutoRequest() {
+        if (!autoRequestEnabled) return
+        when {
+            PermissionHelper.missingRuntimePermissions(this).isNotEmpty() &&
+                attemptedAutoRequestSteps.add(AUTO_STEP_RUNTIME) -> {
+                requestRuntimePermissions()
+            }
+
+            PermissionHelper.needsNotificationRuntimePermission(this) &&
+                attemptedAutoRequestSteps.add(AUTO_STEP_NOTIFICATION) -> {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+
+            PermissionHelper.needsBackgroundLocationPermission(this) &&
+                attemptedAutoRequestSteps.add(AUTO_STEP_BACKGROUND_LOCATION) -> {
+                handleBackgroundLocationAction()
+            }
+
+            else -> {
+                autoRequestEnabled = false
+            }
         }
     }
 
@@ -340,4 +337,11 @@ class PermissionConfigActivity : AppCompatActivity() {
     }
 
     private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+
+    companion object {
+        const val EXTRA_AUTO_REQUEST = "auto_request"
+        private const val AUTO_STEP_RUNTIME = "runtime"
+        private const val AUTO_STEP_NOTIFICATION = "notification"
+        private const val AUTO_STEP_BACKGROUND_LOCATION = "background_location"
+    }
 }

@@ -33,7 +33,8 @@ class AboutActivity : AppCompatActivity() {
             R.string.about_version_format,
             versionName.ifBlank { getString(R.string.label_unknown) }
         )
-        binding.aboutGithubButton.setOnClickListener { openGithub() }
+        binding.aboutGithubButton.setOnClickListener { openUrl(getString(R.string.github_url)) }
+        binding.aboutHyperCeilerButton.setOnClickListener { openUrl(getString(R.string.hyperceiler_url)) }
         binding.aboutExportLogsButton.setOnClickListener { exportLogs() }
     }
 
@@ -53,10 +54,14 @@ class AboutActivity : AppCompatActivity() {
         }
     }
 
-    private fun openGithub() {
-        val uri = Uri.parse(getString(R.string.github_url))
+    private fun openUrl(url: String) {
+        val uri = Uri.parse(url)
         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
-        startActivity(intent)
+        runCatching { startActivity(intent) }
+            .onFailure {
+                val err = it.message ?: getString(R.string.label_unknown)
+                Toast.makeText(this, getString(R.string.status_open_link_failed, err), Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun exportLogs() {

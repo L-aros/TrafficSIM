@@ -24,26 +24,13 @@
 
     <application
         android:allowBackup="false"
+        android:description="@string/xposed_description"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TrafficManager"
         tools:targetApi="34">
-
-        <!-- LSPosed/Xposed metadata -->
-        <meta-data
-            android:name="xposedmodule"
-            android:value="true" />
-        <meta-data
-            android:name="xposeddescription"
-            android:value="@string/xposed_description" />
-        <meta-data
-            android:name="xposedminversion"
-            android:value="93" />
-        <meta-data
-            android:name="xposedscope"
-            android:resource="@array/xposed_recommended_scopes" />
 
         <activity
             android:name=".MainActivity"
@@ -118,6 +105,11 @@
                 <action android:name="com.laros.lsp.traffics.action.DEBUG_FOCUS_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".receiver.FocusWhitelistToggleReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

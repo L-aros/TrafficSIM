@@ -38,6 +38,7 @@ import com.laros.lsp.traffics.databinding.PageRulesContentBinding
 import com.laros.lsp.traffics.model.AppConfig
 import com.laros.lsp.traffics.model.SwitchRule
 import com.laros.lsp.traffics.service.RunModeController
+import com.laros.lsp.traffics.util.PermissionHelper
 import com.laros.lsp.traffics.util.TaskVisibilityController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var lastNetCallbackAtMs: Long = 0L
     private val selectedRuleIds = mutableSetOf<String>()
+    private var autoPermissionFlowLaunched = false
 
     private enum class Page {
         HOME, RULES, ADVANCED
@@ -84,8 +86,9 @@ class MainActivity : AppCompatActivity() {
         bindBottomNav()
         applyInitialPageSelection()
         bindClicks()
-        updateLiveStatus()
         refreshRuleList()
+        refreshHomeStatus()
+        maybeLaunchPermissionFlowIfNeeded()
         startAutoSwitchOnLaunch()
     }
 
@@ -97,6 +100,18 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         syncTaskVisibility()
+        val hasBlockingPermissions = PermissionHelper.hasBlockingPermissions(this)
+        if (hasBlockingPermissions) {
+            refreshHomeStatus()
+            maybeLaunchPermissionFlowIfNeeded()
+            return
+        }
+        val shouldRestartAutoSwitch = autoPermissionFlowLaunched
+        autoPermissionFlowLaunched = false
+        refreshHomeStatus()
+        if (shouldRestartAutoSwitch) {
+            startAutoSwitchOnLaunch()
+        }
     }
 
     override fun onStop() {
@@ -125,6 +140,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         homeBinding.startButton.setOnClickListener {
+            if (PermissionHelper.hasBlockingPermissions(this)) {
+                refreshHomeStatus()
+                maybeLaunchPermissionFlowIfNeeded(force = true)
+                return@setOnClickListener
+            }
             val current = configStore.load()
             val next = current.copy(enabled = true)
             persistConfig(next)
@@ -230,6 +250,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateLiveStatus() {
+        if (PermissionHelper.hasBlockingPermissions(this)) {
+            showPermissionMissingStatus()
+            return
+        }
         if (updatingLiveStatus) return
         updatingLiveStatus = true
         homeBinding.refreshStatusButton.isEnabled = false
@@ -588,11 +612,15 @@ class MainActivity : AppCompatActivity() {
         statusRevertJob?.cancel()
         statusRevertJob = lifecycleScope.launch {
             delay(5_000L)
-            updateLiveStatus()
+            refreshHomeStatus()
         }
     }
 
     private fun startAutoSwitchOnLaunch() {
+        if (PermissionHelper.hasBlockingPermissions(this)) {
+            refreshHomeStatus()
+            return
+        }
         val current = configStore.load()
         if (!current.enabled) {
             showStatus(getString(R.string.status_auto_switch_disabled))
@@ -672,6 +700,42 @@ class MainActivity : AppCompatActivity() {
 
     private fun syncTaskVisibility() {
         TaskVisibilityController.sync(this, configStore.load().hideBackgroundTask)
+    }
+
+    private fun refreshHomeStatus() {
+        if (PermissionHelper.hasBlockingPermissions(this)) {
+            showPermissionMissingStatus()
+        } else {
+            updateLiveStatus()
+        }
+    }
+
+    private fun showPermissionMissingStatus() {
+        liveStatusJob?.cancel()
+        updatingLiveStatus = false
+        homeBinding.refreshStatusButton.isEnabled = true
+        val labels = PermissionHelper.blockingPermissionLabels(this)
+        homeBinding.statusText.text = getString(
+            R.string.status_missing_permissions,
+            labels.joinToString(", ")
+        )
+        updateLastSwitchSummary()
+    }
+
+    private fun maybeLaunchPermissionFlowIfNeeded(force: Boolean = false): Boolean {
+        if (!PermissionHelper.hasBlockingPermissions(this)) {
+            autoPermissionFlowLaunched = false
+            return false
+        }
+        if (!force && autoPermissionFlowLaunched) {
+            return true
+        }
+        autoPermissionFlowLaunched = true
+        startActivity(
+            Intent(this, PermissionConfigActivity::class.java)
+                .putExtra(PermissionConfigActivity.EXTRA_AUTO_REQUEST, true)
+        )
+        return true
     }
 
     private fun updateLastSwitchSummary() {

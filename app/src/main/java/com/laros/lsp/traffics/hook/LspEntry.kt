@@ -1,14 +1,32 @@
 package com.laros.lsp.traffics.hook
 
+import android.util.Log
 import com.laros.lsp.traffics.core.BridgeContract
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.callbacks.XC_LoadPackage
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
 
-class LspEntry : IXposedHookLoadPackage {
-    override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if (!BridgeContract.PHONE_PACKAGES.contains(lpparam.packageName)) return
-        runCatching { PhoneProcessBridge.install(lpparam.classLoader) }
-            .onFailure { XposedBridge.log("TrafficManager install bridge failed: ${it.message}") }
+class LspEntry : XposedModule() {
+    override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
+        val packageName = param.packageName
+        runCatching {
+            when {
+                BridgeContract.PHONE_PACKAGES.contains(packageName) -> {
+                    PhoneProcessBridge.install(this, param.classLoader, packageName)
+                }
+
+                FOCUS_HOOK_PACKAGES.contains(packageName) -> {
+                    FocusNotificationWhitelistHook.install(this, param.classLoader, packageName)
+                }
+
+                else -> return
+            }
+        }.onFailure {
+            log(Log.ERROR, TAG, "install hooks failed for $packageName", it)
+        }
+    }
+
+    private companion object {
+        const val TAG = "TrafficManager"
+        val FOCUS_HOOK_PACKAGES = setOf("com.android.systemui")
     }
 }

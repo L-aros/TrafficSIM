@@ -107,6 +107,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // Place LSPosed/Xposed API jar in app/libs/api-82.jar for compile-only.
-    compileOnly(files("libs/api-82.jar"))
+    compileOnly("io.github.libxposed:api:101.0.0")
 }

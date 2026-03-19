@@ -2,7 +2,8 @@ package com.laros.lsp.traffics.model
 
 data class AppConfig(
     val enabled: Boolean = true,
-    val powerSaveMode: Boolean = true,
+    val powerSaveMode: Boolean = false,
+    val removeFocusWhitelistCheck: Boolean = true,
     val hideBackgroundTask: Boolean = false,
     val screenOnIntervalSec: Int = 20,
     val screenOffIntervalSec: Int = 90,

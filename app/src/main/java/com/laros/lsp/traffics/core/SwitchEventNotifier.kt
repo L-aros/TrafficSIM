@@ -44,15 +44,22 @@ class SwitchEventNotifier(private val context: Context) {
         )
 
         Log.d(TAG, "post main focus notification title=${payload.title} status=$focusStatus token=${payload.token}")
+        saveActiveState(context, payload.token, TransitionPhase.MAIN)
         manager.notify(
             AutoSwitchServiceChannels.EVENT_FOCUS_NOTIFY_ID,
             buildFocusNotification(payload, XiaomiFocusNotificationCompat.FocusMode.MAIN, silent = false)
         )
+        scheduleSummaryTransition(context, payload)
     }
 
     fun notifySummaryFromIntent(intent: Intent) {
-        Log.d(TAG, "ignore stale summary transition action=${intent.action}")
-        cancelPendingTransitions(context)
+        val payload = payloadFromIntent(intent)
+        if (payload == null) {
+            Log.d(TAG, "drop invalid focus summary transition action=${intent.action}")
+            cancelPendingTransitions(context)
+            return
+        }
+        postSummaryNotification(payload, "alarm")
     }
 
     private fun postSummaryNotification(payload: EventPayload, source: String) {
@@ -78,7 +85,11 @@ class SwitchEventNotifier(private val context: Context) {
         focusMode: XiaomiFocusNotificationCompat.FocusMode,
         silent: Boolean
     ): Notification {
-        val builder = buildBaseNotificationBuilder(payload, AutoSwitchServiceChannels.FOCUS_CHANNEL_ID)
+        val builder = buildBaseNotificationBuilder(
+            payload = payload,
+            channelId = AutoSwitchServiceChannels.FOCUS_CHANNEL_ID,
+            contentIntent = buildContentIntent(payload)
+        )
             .setTicker("${payload.title} ${payload.text}".trim())
             .setSilent(silent)
             .addExtras(android.os.Bundle().apply {
@@ -122,18 +133,11 @@ class SwitchEventNotifier(private val context: Context) {
 
     private fun buildBaseNotificationBuilder(
         payload: EventPayload,
-        channelId: String
+        channelId: String,
+        contentIntent: PendingIntent
     ): NotificationCompat.Builder {
         val style = NotificationCompat.BigTextStyle()
             .bigText(payload.text)
-        val contentIntent = PendingIntent.getActivity(
-            context,
-            payload.token.hashCode(),
-            Intent(context, com.laros.lsp.traffics.MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
         return NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.stat_notify_more)
             .setContentTitle(payload.title)
@@ -150,6 +154,17 @@ class SwitchEventNotifier(private val context: Context) {
                     NotificationCompat.PRIORITY_HIGH
                 }
             )
+    }
+
+    private fun buildContentIntent(payload: EventPayload): PendingIntent {
+        return PendingIntent.getActivity(
+            context,
+            payload.token.hashCode(),
+            Intent(context, com.laros.lsp.traffics.MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     private fun buildFocusStatus(event: SwitchEvent): XiaomiFocusNotificationCompat.FocusStatus {

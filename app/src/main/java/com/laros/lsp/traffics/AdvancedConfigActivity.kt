@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.laros.lsp.traffics.core.SwitchRunner
+import com.laros.lsp.traffics.util.FocusWhitelistBypassController
 import com.laros.lsp.traffics.util.TaskVisibilityController
 
 class AdvancedConfigActivity : AppCompatActivity() {
@@ -29,6 +30,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
     private var updatingNoWifiSwitch = false
     private var updatingNoWifiSlot = false
     private var updatingPowerMode = false
+    private var updatingFocusWhitelistSwitch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +45,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
         bindNoWifiImmediateSwitch()
         bindNoWifiSlotGroup()
         bindPowerModeGroup()
+        bindFocusWhitelistSwitch()
 
         binding.saveButton.setOnClickListener { saveRawConfig() }
     }
@@ -70,7 +73,9 @@ class AdvancedConfigActivity : AppCompatActivity() {
         syncNoWifiImmediateSwitch(cfg.noWifiImmediate)
         syncNoWifiSlot(cfg.noWifiSlot)
         syncPowerMode(cfg.powerSaveMode)
+        syncFocusWhitelistSwitch(cfg.removeFocusWhitelistCheck)
         TaskVisibilityController.sync(this, cfg.hideBackgroundTask)
+        FocusWhitelistBypassController.sync(this, cfg.removeFocusWhitelistCheck)
     }
 
     private fun saveRawConfig() {
@@ -82,6 +87,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
             syncNoWifiImmediateSwitch(cfg.noWifiImmediate)
             syncNoWifiSlot(cfg.noWifiSlot)
             syncPowerMode(cfg.powerSaveMode)
+            syncFocusWhitelistSwitch(cfg.removeFocusWhitelistCheck)
             TaskVisibilityController.sync(this, cfg.hideBackgroundTask)
             applyRuntimeConfig(cfg, "advanced_json_save")
             Toast.makeText(this, R.string.status_config_saved, Toast.LENGTH_SHORT).show()
@@ -103,6 +109,7 @@ class AdvancedConfigActivity : AppCompatActivity() {
         syncNoWifiImmediateSwitch(config.noWifiImmediate)
         syncNoWifiSlot(config.noWifiSlot)
         syncPowerMode(config.powerSaveMode)
+        syncFocusWhitelistSwitch(config.removeFocusWhitelistCheck)
         TaskVisibilityController.sync(this, config.hideBackgroundTask)
     }
 
@@ -138,6 +145,23 @@ class AdvancedConfigActivity : AppCompatActivity() {
         updatingNoWifiSwitch = true
         binding.noWifiImmediateSwitch.isChecked = enabled
         updatingNoWifiSwitch = false
+    }
+
+    private fun bindFocusWhitelistSwitch() {
+        binding.focusWhitelistSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (updatingFocusWhitelistSwitch) return@setOnCheckedChangeListener
+            val config = parseConfigFromEditor().getOrElse {
+                syncFocusWhitelistSwitch(configStore.load().removeFocusWhitelistCheck)
+                return@setOnCheckedChangeListener
+            }
+            persistConfig(config.copy(removeFocusWhitelistCheck = isChecked))
+        }
+    }
+
+    private fun syncFocusWhitelistSwitch(enabled: Boolean) {
+        updatingFocusWhitelistSwitch = true
+        binding.focusWhitelistSwitch.isChecked = enabled
+        updatingFocusWhitelistSwitch = false
     }
 
     private fun bindNoWifiSlotGroup() {

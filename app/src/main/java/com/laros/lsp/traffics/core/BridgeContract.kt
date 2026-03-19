@@ -15,7 +15,6 @@ object BridgeContract {
     const val EXTRA_SOURCE_PACKAGE = "source_package"
 
     val PHONE_PACKAGES = listOf(
-        "android",
         "com.android.phone",
         "com.xiaomi.phone",
         "com.qti.phone",
