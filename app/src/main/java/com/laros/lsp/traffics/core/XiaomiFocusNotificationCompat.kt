@@ -2,7 +2,6 @@ package com.laros.lsp.traffics.core
 
 import android.app.Notification
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
@@ -17,10 +16,11 @@ object XiaomiFocusNotificationCompat {
     private const val BUSINESS_SCENE = "traffic_manager"
     private const val KEY_FOCUS_MAIN_PIC = "miui.focus.pic_tm_island"
     private const val KEY_FOCUS_SMALL_PIC = "miui.focus.pic_tm_small"
-    private const val MAIN_EXPANDED_TIME_SEC = 3
-    private const val MAIN_ISLAND_TIMEOUT_SEC = 8
-    private const val SUMMARY_ISLAND_TIMEOUT_SEC = 5
-    private const val FOCUS_TIMEOUT = 720
+    private const val KEY_FOCUS_STATUS_PIC = "miui.focus.pic_tm_status"
+    private const val MAIN_EXPANDED_TIME_SEC = 4
+    private const val SUMMARY_ISLAND_TIMEOUT_SEC = 4
+    private const val MAIN_ISLAND_TIMEOUT_SEC = MAIN_EXPANDED_TIME_SEC + SUMMARY_ISLAND_TIMEOUT_SEC
+    private const val FOCUS_TIMEOUT = 9
     private const val IMAGE_TEXT_TYPE_PLAIN_ICON = 1
     private const val IMAGE_TEXT_TYPE_RIGHT_ICON = 2
 
@@ -44,7 +44,7 @@ object XiaomiFocusNotificationCompat {
         focusStatus: FocusStatus,
         focusMode: FocusMode
     ): Notification {
-        val focusPics = buildFocusPicsBundle(context, focusStatus, focusMode)
+        val focusPics = buildFocusPicsBundle(context, focusStatus)
         val paramValue = runCatching {
             buildFocusParam(
                 notifyId = notifyId,
@@ -84,10 +84,12 @@ object XiaomiFocusNotificationCompat {
             put("islandTimeout", islandTimeoutSec)
             put("expandedTime", if (summaryMode) 0 else MAIN_EXPANDED_TIME_SEC)
             put("dismissIsland", false)
-            put("bigIslandArea", JSONObject().apply {
-                put("imageTextInfoLeft", buildBigIslandLeft(title, subtitle, summaryMode))
-                put("imageTextInfoRight", buildBigIslandRight())
-            })
+            if (!summaryMode) {
+                put("bigIslandArea", JSONObject().apply {
+                    put("imageTextInfoLeft", buildBigIslandLeft(title, subtitle))
+                    put("imageTextInfoRight", buildBigIslandRight())
+                })
+            }
             put("smallIslandArea", buildSmallIslandArea())
         }
 
@@ -117,16 +119,13 @@ object XiaomiFocusNotificationCompat {
         return JSONObject().apply { put("param_v2", paramV2) }
     }
 
-    private fun buildBigIslandLeft(title: String, subtitle: String, summaryMode: Boolean): JSONObject {
-        val picKey = if (summaryMode) KEY_FOCUS_SMALL_PIC else KEY_FOCUS_MAIN_PIC
-        val displayTitle = if (summaryMode) "" else title.take(14)
-        val displaySubtitle = if (summaryMode) "" else subtitle.take(14)
+    private fun buildBigIslandLeft(title: String, subtitle: String): JSONObject {
         return JSONObject().apply {
             put("type", 5)
-            put("picInfo", buildFocusBadgePicInfo(picKey))
+            put("picInfo", buildFocusBadgePicInfo(KEY_FOCUS_MAIN_PIC))
             put("textInfo", JSONObject().apply {
-                put("title", displayTitle)
-                put("content", displaySubtitle)
+                put("title", title.take(14))
+                put("content", subtitle.take(14))
                 put("showHighlightColor", false)
                 put("narrowFont", false)
             })
@@ -143,7 +142,7 @@ object XiaomiFocusNotificationCompat {
     private fun buildBigIslandRight(): JSONObject {
         return JSONObject().apply {
             put("type", IMAGE_TEXT_TYPE_RIGHT_ICON)
-            put("picInfo", buildFocusPlainPicInfo(KEY_FOCUS_SMALL_PIC))
+            put("picInfo", buildFocusPlainPicInfo(KEY_FOCUS_STATUS_PIC))
         }
     }
 
@@ -161,31 +160,16 @@ object XiaomiFocusNotificationCompat {
         }
     }
 
-    private fun buildFocusPicsBundle(
-        context: Context,
-        focusStatus: FocusStatus,
-        focusMode: FocusMode
-    ): Bundle {
-        val smallRes = resolveSmallIconRes(focusStatus)
-        val mainRes = if (focusMode == FocusMode.SUMMARY) smallRes else R.drawable.tm_focus_inform_left
-        val mainIcon = buildIcon(context, mainRes)
-        val smallIcon = buildIcon(context, smallRes)
+    private fun buildFocusPicsBundle(context: Context, focusStatus: FocusStatus): Bundle {
+        val statusRes = resolveStatusIconRes(focusStatus)
         return Bundle().apply {
-            putParcelable(KEY_FOCUS_MAIN_PIC, mainIcon)
-            putParcelable(KEY_FOCUS_SMALL_PIC, smallIcon)
+            putParcelable(KEY_FOCUS_MAIN_PIC, Icon.createWithResource(context, R.drawable.tm_focus_inform_left))
+            putParcelable(KEY_FOCUS_SMALL_PIC, Icon.createWithResource(context, R.drawable.tm_focus_mini))
+            putParcelable(KEY_FOCUS_STATUS_PIC, Icon.createWithResource(context, statusRes))
         }
     }
 
-    private fun buildIcon(context: Context, resId: Int): Icon {
-        val bitmap = BitmapFactory.decodeResource(context.resources, resId)
-        return if (bitmap != null) {
-            Icon.createWithBitmap(bitmap)
-        } else {
-            Icon.createWithResource(context, resId)
-        }
-    }
-
-    private fun resolveSmallIconRes(focusStatus: FocusStatus): Int {
+    private fun resolveStatusIconRes(focusStatus: FocusStatus): Int {
         return when (focusStatus) {
             FocusStatus.SUCCESS -> R.drawable.tm_focus_status_success
             FocusStatus.FAILED, FocusStatus.VERIFY_FAILED -> R.drawable.tm_focus_status_failed

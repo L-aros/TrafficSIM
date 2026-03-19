@@ -44,22 +44,15 @@ class SwitchEventNotifier(private val context: Context) {
         )
 
         Log.d(TAG, "post main focus notification title=${payload.title} status=$focusStatus token=${payload.token}")
-        saveActiveState(context, payload.token, TransitionPhase.MAIN)
         manager.notify(
             AutoSwitchServiceChannels.EVENT_FOCUS_NOTIFY_ID,
             buildFocusNotification(payload, XiaomiFocusNotificationCompat.FocusMode.MAIN, silent = false)
         )
-        scheduleSummaryTransition(context, payload)
     }
 
     fun notifySummaryFromIntent(intent: Intent) {
-        val payload = payloadFromIntent(intent)
-        if (payload == null) {
-            Log.d(TAG, "drop invalid focus summary transition action=${intent.action}")
-            cancelPendingTransitions(context)
-            return
-        }
-        postSummaryNotification(payload, "alarm")
+        Log.d(TAG, "ignore stale summary transition action=${intent.action}")
+        cancelPendingTransitions(context)
     }
 
     private fun postSummaryNotification(payload: EventPayload, source: String) {
@@ -146,6 +139,7 @@ class SwitchEventNotifier(private val context: Context) {
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
+            .setTimeoutAfter(FOCUS_NOTIFICATION_TIMEOUT_MS)
             .setWhen(System.currentTimeMillis())
             .setPriority(
                 if (payload.focusStatus == XiaomiFocusNotificationCompat.FocusStatus.SUCCESS) {
@@ -356,7 +350,8 @@ class SwitchEventNotifier(private val context: Context) {
         private const val EXTRA_EVENT_MESSAGE = "tm.focus.event_message"
         private const val EXTRA_EVENT_STATUS = "tm.focus.event_status"
         private const val DUPLICATE_EVENT_WINDOW_MS = 15_000L
-        private const val MAIN_FOCUS_DISPLAY_MS = 3_000L
+        private const val MAIN_FOCUS_DISPLAY_MS = 4_000L
+        private const val FOCUS_NOTIFICATION_TIMEOUT_MS = 9_000L
         private const val SUMMARY_REQUEST_CODE = 6101
         private const val PREFS_NAME = "tm_focus_notification"
         private const val PREF_ACTIVE_TOKEN = "active_token"
